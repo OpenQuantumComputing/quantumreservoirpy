@@ -11,13 +11,13 @@ The interface of this package is mostly based on the package [reservoirpy](https
 
 Using a reservoir is simple enough;
 ```python
-from qreservoir import QReservoir
+from qreservoirpy import QReservoir
 res = QReservoir(INIT)
 timeseries = [0, 1, 2, 3]
 states = res.run(timeseries)
 ```
 
-The above code will embed the one-dimensional `timeseries` into a higher dimensional space using a quantum circuit. However, the exact nature of this embedding is largely dependent on what you write as `INIT`. The rest of this README is dedicated to the creation and specification of `QReservoir`s.
+The above code will embed the one-dimensional `timeseries` into a higher dimensional space using a quantum circuit. However, the exact nature of this embedding is largely dependent on what you write as `INIT`. The rest of this README is dedicated to the creation of `QReservoir`s.
 ## Simple Layers
 `QReservoir` has two main arguments: `qubits`, which specify the number of qubits the circuit should use, and `layers`, which is described below. The rest of the arguments are explained later.
 
@@ -170,6 +170,20 @@ res.run(timeseries)
 ```
 
 `analyze_fcn` will ensure that only the last four measurements (the ones from the measurement layer) are kept as state variables. The above code was used to create the last timeseries.
+
+### `M`
+When `Incrementally=True`, one could want to only make a subset of the circuit, rather than using the entire timeseries every experiment. The `M` variable in `Layers.Timeseries` does exactly this. If `Incrementally=True` and `M = 2`, a call to `res.run([0, 1, 2, 3, 4, 5])` would result in the following 'incremental' experiments:
+
+- `timeseries=[0]`
+- `timeseries=[0, 1]`
+- `timeseries=[0, 1, 2]`
+- `timeseries=[0, 1, 2, 3]`
+- `timeseries=[1, 2, 3, 4]`
+- `timeseries=[2, 3, 4, 5]`
+
+Where only the last `2M` timesteps are used at a time.
+
+By default, `M=np.inf`.
 ## References
 <a id="1">[1]</a>
 Chen et al. (2020)
