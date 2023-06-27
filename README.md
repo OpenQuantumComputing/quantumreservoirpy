@@ -1,5 +1,10 @@
 # Quantum Reservoir Computing (QRC)
-
+## Installation
+As the *qreservoirpy* folder is structured as a python package, you need to pip install it. Navigate to the outer qreservoirpy/ folder (the one with setup.py in it) and run
+```console
+~/ReservoirComputingExamples/qreservoirpy pip install .
+```
+This will install qreservoirpy, as well as the dependent packages (among others qiskit and scikit-learn)
 ## Simple Layers
 ```python
 from qreservoirpy import QReservoir, Layers
@@ -38,7 +43,7 @@ fig = res.circuit.draw('mpl')
 
 
 ### `build_method`
-The Timeseries Layers takes has an argument `build_methods` which is a function of the format
+The Timeseries Layers takes as an argument `build_methods` which is a function of the format
 ```python
 def build_method(circuit, timestep):
     # Append operation to circuit for each timestep
@@ -46,7 +51,7 @@ def build_method(circuit, timestep):
 ```
 This method specifies what to happen for every timestep, when the reservoir is later run on a timeseries. You must append operations to *circuit* and return the finished circuit at the end.
 
-The *circuit* variable is (almost) a qiskit [QuantumCircuit](https://qiskit.org/documentation/stubs/qiskit.circuit.QuantumCircuit.html) object, and you can expect that all operations given by qiskit work. The only difference is how one specifies the measurements. `circuit.measure(qbit, clbit)` from qiskit has been replaced by `circuit.measure(qbit)`. This was done for two reasons:
+The *circuit* variable is (almost) a qiskit [QuantumCircuit](https://qiskit.org/documentation/stubs/qiskit.circuit.QuantumCircuit.html) object, and you can expect that all operations given by qiskit to work. The only difference is how one specifies the measurements. `circuit.measure(qbit, clbit)` from qiskit has been replaced by `circuit.measure(qbit)`. This was done for two reasons:
 - To avoid having to create classical registers in `build_method`
 -  To remove the necessity of passing the number of measurements already made into `build_method`
 
@@ -55,7 +60,7 @@ Both of these choices made the implementations of `build_method`'s more user-fri
 The *timestep* variable is a single timestep, and must be of dimension `(1, n)`.
 
 ### Adding parameters to `build_method`
-Consider the case where `build_method` should append an operator to the circuit which depend on `timestep`. To allow for this, one could add extra variables to `build_method`, provided that one provides the extra argument as key-value-pairs when initializing `Layers.Timeseries`. An example is shown below
+Consider the case where `build_method` should append a time dependent (i.e. depending on `timestep`) operator to the circuit . To allow for this, one could add extra variables to `build_method`, as long as the same variable is provided as anextra key-value-pair argument when initializing `Layers.Timeseries`. An example is shown below
 
 ```python
 from qreservoirpy import QReservoir, Layers
