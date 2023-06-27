@@ -1,11 +1,27 @@
 # Quantum Reservoir Computing (QRC)
 ## Installation
-As the *qreservoirpy* folder is structured as a python package, you need to pip install it. Navigate to the outer qreservoirpy/ folder (the one with setup.py in it) and run
+The *qreservoirpy* folder is structured as a python package and must therefore be pip installed. Navigate to the outer qreservoirpy/ folder (the one with setup.py in it) and run
 ```console
 ~/ReservoirComputingExamples/qreservoirpy pip install .
 ```
 This will install qreservoirpy, as well as the dependent packages (among others qiskit and scikit-learn)
+
+## Interface
+The interface of this package is mostly based on the package [reservoirpy](https://github.com/reservoirpy/reservoirpy), and you should consider checking it out to better understand how to use qreservoirpy.
+
+Using a reservoir is simple enough;
+```python
+from qreservoir import QReservoir
+res = QReservoir(INIT)
+timeseries = [0, 1, 2, 3]
+states = res.run(timeseries)
+```
+
+The above code will embed the one-dimensional `timeseries` into a higher dimensional space using a quantum circuit. However, the exact nature of this embedding is largely dependent on what you write as `INIT`. The rest of this README is dedicated to the creation and specification of `QReservoir`s.
 ## Simple Layers
+`QReservoir` has two main arguments: `qubits`, which specify the number of qubits the circuit should use, and `layers`, which is described below. The rest of the arguments are explained later.
+
+There are currently only three *Simple* layers implemented, and all are shown below.
 ```python
 from qreservoirpy import QReservoir, Layers
 res = QReservoir(qubits=4, layers=[
@@ -22,8 +38,7 @@ When the `QReservoir` is run or drawn, it creates a `QuantumCircuit` and loops t
 ## Timeseries
 
 By far the most important Layer, is `Layers.Timeseries`. This layer creates a highly customizable periodic circuit used to specify what measurements and/or operations to be done for every timestep.
-### Simple usage
-Consider the code below.
+### Simple example
 
 ```python
 from qreservoirpy import QReservoir, Layers
@@ -60,7 +75,7 @@ Both of these choices made the implementations of `build_method`'s more user-fri
 The *timestep* variable is a single timestep, and must be of dimension `(1, n)`.
 
 ### Adding parameters to `build_method`
-Consider the case where `build_method` should append a time dependent (i.e. depending on `timestep`) operator to the circuit . To allow for this, one could add extra variables to `build_method`, as long as the same variable is provided as anextra key-value-pair argument when initializing `Layers.Timeseries`. An example is shown below
+Consider the case where `build_method` should append a time dependent (i.e. depending on `timestep`) operator to the circuit . To allow for this, one could add extra variables to `build_method`, as long as the same variable is provided as an extra key-value-pair argument when initializing `Layers.Timeseries`. An example is shown below
 
 ```python
 from qreservoirpy import QReservoir, Layers
@@ -155,11 +170,6 @@ res.run(timeseries)
 ```
 
 `analyze_fcn` will ensure that only the last four measurements (the ones from the measurement layer) are kept as state variables. The above code was used to create the last timeseries.
-## Interface
-To bettter understand how to use qreservoirpy, consider checking out the package [reservoirpy](https://github.com/reservoirpy/reservoirpy), whose interface served as inspiration.
-
-With a functioning `QReservoir`, simply use the method `run(timeseries)` to drive the quantum reservoir. `run` will create the quantum circuit and perform the experiment specified by the initialization of the reservoir.
-
 ## References
 <a id="1">[1]</a>
 Chen et al. (2020)
