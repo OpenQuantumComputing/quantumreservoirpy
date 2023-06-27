@@ -90,8 +90,80 @@ fig = res.circuit.draw('mpl')
 ```
 ![Image](ReadmeData/Images/adding_parameters.jpg)
 
+### `Incrementally=True`
+Many features of `qreservoirpy` was implemented to reproduce the work of [[1]](#1). One of them, is the keyword `Incrementally` in a `Layers.Timeseries`.
+
+Consider the following code
+```python
+from qreservoirpy import QReservoir, Layers
+from qiskit.quantum_info import random_unitary
+
+def build_method(circuit, timestep, operator):
+    circuit.unitary(operator, circuit.qubits)
+    return circuit
+
+
+timeseries = [0, 1, 2]
+res = QReservoir(qubits=4, layers=[
+    Layers.H(),
+    Layers.Timeseries(
+        build_method=build_method,
+        incrementally=True,
+        operator = random_unitary(2**4)
+        ),
+    Layers.Measurement(range(4))
+])
+res.run(timeseries)
+fig = res.circuit.draw('mpl')
+```
+![Image](ReadmeData/Images/incrementally.jpg)
+
+It looks like this only did four measurements. However, `incrementally=True` means that the `Timeseries` Layer was incrementally added, meaning that the above code actually ran 3 simulations:
+- First with `timeseries=[0]`
+- Second with `timeseries=[0, 1]`
+- Third with `timeseries=[0, 1, 2]`
+
+The `circuit.draw` is therefore misleading in this case: the code does not use the same circuit, but creates a new one for each timestep.
+
+To add non-linearities, one could be tempted to make measurements in the timeseries like below
+![Image](ReadmeData/Images/nonlinear_incrementally.jpg)
+One needs to be careful, however, when doing this with `incrementally=True`. By default, when the 'incremental' experiments are run, it appends *all* measurements to the state variable - including the 'nonlinearity-ensuring' ones. To have complete control over which measurements that should be used as state variables, give the `QReservoir` an `analyze_function`, like in the code below.
+```python
+from qreservoirpy import QReservoir, Layers
+from qiskit.quantum_info import random_unitary
+
+def analyze_fcn(sim_result):
+    return sim_result[-4:]
+
+def build_method(circuit, timestep, operator):
+    circuit.measure(0)
+    circuit.unitary(operator, circuit.qubits)
+    return circuit
+
+
+timeseries = [0, 1, 2]
+res = QReservoir(qubits=4, layers=[
+    Layers.H(),
+    Layers.Timeseries(
+        build_method=build_method,
+        incrementally=True,
+        operator = random_unitary(2**4),
+        ),
+    Layers.Measurement(range(4))
+], analyze_function=analyze_fcn)
+res.run(timeseries)
+```
+
+`analyze_fcn` will ensure that only the last four measurements (the ones from the measurement layer) are kept as state variables. The above code was used to create the last timeseries.
 ## Interface
 To bettter understand how to use qreservoirpy, consider checking out the package [reservoirpy](https://github.com/reservoirpy/reservoirpy), whose interface served as inspiration.
 
 With a functioning `QReservoir`, simply use the method `run(timeseries)` to drive the quantum reservoir. `run` will create the quantum circuit and perform the experiment specified by the initialization of the reservoir.
+
+## References
+<a id="1">[1]</a>
+Chen et al. (2020)
+[*Temporal Information Processing on Noisy Quantum Computers*](https://link.aps.org/doi/10.1103/PhysRevApplied.14.024065),
+
+
 
