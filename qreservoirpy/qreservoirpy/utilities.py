@@ -1,4 +1,5 @@
-from qiskit import transpile, Aer
+from qiskit import Aer
+import qiskit as qs
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -10,13 +11,14 @@ def listify(elem):
         return [elem]
 
 
-def _simulate(circuit, shots):
+def _simulate(circuit, shots, transpile):
     simulator = Aer.get_backend('aer_simulator_statevector')
-    circuit = transpile(circuit, simulator)
+    if transpile:
+        circuit = qs.transpile(circuit, simulator)
     return simulator.run(circuit, shots=shots, memory=True).result()
 
-def simulate(circuit, shots):
-    return _simulate(circuit, shots).get_memory()
+def simulate(circuit, shots, transpile):
+    return _simulate(circuit, shots, transpile).get_memory()
 
 def memory_to_mean(memory, meas_per_timestep):
         # Takes in memory of the form [1010101001, 1010010101, 0010110010 ...]

@@ -18,16 +18,14 @@ class QReservoir:
         self.kwargs = kwargs
         self.analyze_fcn = analyze_function
 
-    def run(self, timeseries, shots=10000):
+    def run(self, timeseries, shots=10000, transpile=False):
         self.total_runned += len(timeseries)
         while len(timeseries) > 0:
             timeseries = self.add_timeseries(timeseries)
             circ = self.__build()
-            mem = utilities.simulate(circ, shots)
+            mem = utilities.simulate(circ, shots, transpile)
             self.states.append(self.analyze_fcn(utilities.memory_to_mean(mem, 1)))
-        self.states = np.array(self.states)
-        self.states = self.states.reshape((self.total_runned, -1))
-        return self.states
+        return np.array(self.states).reshape((self.total_runned, -1))
 
     def add_timeseries(self, timeseries):
         for layer in self.layers:
