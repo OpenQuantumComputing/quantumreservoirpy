@@ -41,7 +41,7 @@ def memory_to_mean(memory, meas_per_timestep):
         # Average over shots. Returned in format (timesteps, features)
         return np.flip(np.average(res, axis=0))
 
-def result_plotter(x, target, warmup=0):
+def result_plotter(x, target, warmup=0.0):
 
     warmup_len = int(len(target) * warmup)
     x = x[warmup_len:]
