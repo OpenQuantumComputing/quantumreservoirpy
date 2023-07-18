@@ -21,6 +21,7 @@ class QReservoir:
     def run(self, timeseries, shots=10000, transpile=False):
         self.total_runned += len(timeseries)
         while len(timeseries) > 0:
+            print(len(timeseries))
             timeseries = self.add_timeseries(timeseries)
             circ = self.__build()
             mem = utilities.simulate(circ, shots, transpile)

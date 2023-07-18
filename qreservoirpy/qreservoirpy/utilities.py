@@ -66,3 +66,15 @@ def result_plotter(x, target, warmup=0.0):
             ax.set_title(f'Feature {idx+1}')
             ax.legend(loc='upper right')
     return fig, axes
+
+def NARMA(n, num, alpha=0.3, beta=0.05, gamma=1.5, delta=0.1):
+    # NARMA model normalized between 0 and 1
+    y = np.zeros(num,dtype=np.float64)
+    u = np.random.uniform(low=0, high=0.5, size=num)
+    for i in range(n, len(y)):
+        y[i] = np.tanh(y[i-1] * (alpha + beta * np.sum(y[i-n:i])) + gamma*u[i-n] * u[i-1] + delta)
+
+    return (y + 1) / 2
+
+def NMSE(x, y):
+    return np.sum((x-y)**2) / np.sum(y**2)
