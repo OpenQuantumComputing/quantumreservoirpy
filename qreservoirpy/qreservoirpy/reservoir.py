@@ -20,7 +20,7 @@ class QReservoir:
 
         self.n_features = self.analyze_fcn(np.zeros(2*len(self.qreg)))
 
-    def run(self, timeseries, shots=10000, transpile=False):
+    def run(self, timeseries, shots=10000, transpile=False, simulator='aer_simulator_statevector'):
         self.total_runned += len(timeseries)
 
 

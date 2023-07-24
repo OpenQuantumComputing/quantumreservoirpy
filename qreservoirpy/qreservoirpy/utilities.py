@@ -3,6 +3,8 @@ import qiskit as qs
 import numpy as np
 import matplotlib.pyplot as plt
 
+from .randomcircuit import random_circuit
+
 
 def listify(elem):
     try:
@@ -11,14 +13,14 @@ def listify(elem):
         return [elem]
 
 
-def _simulate(circuit, shots, transpile):
-    simulator = Aer.get_backend('aer_simulator_statevector')
+def _simulate(circuit, shots, transpile, simulator):
+    simulator = Aer.get_backend(simulator)
     if transpile:
         circuit = qs.transpile(circuit, simulator)
     return simulator.run(circuit, shots=shots, memory=True).result()
 
-def simulate(circuit, shots, transpile):
-    return _simulate(circuit, shots, transpile).get_memory()
+def simulate(circuit, shots, transpile, simulator='aer_simulator_statevector'):
+    return _simulate(circuit, shots, transpile, simulator).get_memory()
 
 def memory_to_mean(memory, meas_per_timestep):
         # Takes in memory of the form [1010101001, 1010010101, 0010110010 ...]
@@ -78,3 +80,4 @@ def NARMA(n, num, alpha=0.3, beta=0.05, gamma=1.5, delta=0.1):
 
 def NMSE(x, y):
     return np.sum((x-y)**2) / np.sum(y**2)
+
