@@ -3,12 +3,12 @@ from .interface import ReservoirCircuit
 
 from qiskit import QuantumRegister, ClassicalRegister
 import numpy as np
-
+from tqdm import tqdm
 
 
 
 class QReservoir:
-    def __init__(self, qubits, layers, analyze_function=lambda res: res, **kwargs) -> None:
+    def __init__(self, qubits, layers, analyze_function=lambda res:res, **kwargs) -> None:
         self.qreg = QuantumRegister(qubits, name='q')
         self.layers = layers
 
@@ -18,14 +18,24 @@ class QReservoir:
         self.kwargs = kwargs
         self.analyze_fcn = analyze_function
 
+        self.n_features = self.analyze_fcn(np.zeros(2*len(self.qreg)))
+
     def run(self, timeseries, shots=10000, transpile=False):
         self.total_runned += len(timeseries)
-        while len(timeseries) > 0:
-            print(len(timeseries))
-            timeseries = self.add_timeseries(timeseries)
-            circ = self.__build()
-            mem = utilities.simulate(circ, shots, transpile)
-            self.states.append(self.analyze_fcn(utilities.memory_to_mean(mem, 1)))
+
+
+        with tqdm(total=len(timeseries)) as pbar:
+            while len(timeseries) > 0:
+                Nold = len(timeseries)
+                timeseries = self.add_timeseries(timeseries)
+                Nnew = len(timeseries)
+                pbar.update(Nold-Nnew)
+
+                circ = self.__build()
+                mem = utilities.simulate(circ, shots, transpile)
+                self.states.append(self.analyze_fcn(utilities.memory_to_mean(mem, 1)))
+
+
         return np.array(self.states).reshape((self.total_runned, -1))
 
     def add_timeseries(self, timeseries):
@@ -48,6 +58,7 @@ class QReservoir:
         return num_meas
 
     def __build(self):
+        ## There are probably more efficient ways of doing this
         num_meas = self.__get_num_measurements()
         creg = ClassicalRegister(num_meas)
         circ = ReservoirCircuit(self.qreg, creg)
