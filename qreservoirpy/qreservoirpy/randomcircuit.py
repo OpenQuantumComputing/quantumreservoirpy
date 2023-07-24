@@ -12,6 +12,8 @@
 
 
 # NOTICE: copied and modified during the summer of 2023
+# This code is based on qiskit's own implementation of random_circuit,
+# but has been modified.
 
 import numpy as np
 
@@ -19,30 +21,12 @@ from qiskit.circuit import QuantumCircuit, CircuitInstruction
 from qiskit.circuit.library import standard_gates
 
 
-def random_circuit(num_qubits, gates, depth):
-    """Generate random circuit of arbitrary size and form.
-
-    This function will generate a random circuit by randomly selecting gates
-    from the set of standard gates in :mod:`qiskit.extensions`. For example:
-
-       from qiskit.circuit.random import random_circuit
-
-       circ = random_circuit(2, 2)
-       circ.draw(output='mpl')
-
-    Args:
-        num_qubits (int): number of quantum wires
-        depth (int): layers of operations (i.e. critical path length)
-
-    Returns:
-        QuantumCircuit: constructed circuit
-
-
-    """
-
+def random_circuit(num_qubits, gates, depth, fillgrade=1):
+    if num_qubits == 0:
+        return QuantumCircuit()
 
     possible_gates = {
-        # (Gate class, number of qubits, number of parameters)
+        # Gate class: (number of qubits, number of parameters)
         standard_gates.IGate: (1, 0),
         standard_gates.SXGate: (1, 0),
         standard_gates.XGate: (1, 0),
@@ -111,8 +95,6 @@ def random_circuit(num_qubits, gates, depth):
                 (gate, n_q, n_p)
             )
 
-    if num_qubits == 0:
-        return QuantumCircuit()
 
     gates = np.array(
         extended_gates, dtype=[("class", object), ("num_qubits", np.int64), ("num_params", np.int64)]
@@ -126,8 +108,10 @@ def random_circuit(num_qubits, gates, depth):
 
     qubits = np.array(qc.qubits, dtype=object, copy=True)
 
+    filling = np.random.random(size=depth)
+
     # Apply arbitrary random operations in layers across all qubits.
-    for _ in range(depth):
+    for i in range(depth):
         # We generate all the randomness for the layer in one go, to avoid many separate calls to
         # the randomisation routines, which can be fairly slow.
 
@@ -141,7 +125,7 @@ def random_circuit(num_qubits, gates, depth):
         max_index = np.searchsorted(cumulative_qubits, num_qubits, side="right")
         gate_specs = gate_specs[:max_index]
         slack = num_qubits - cumulative_qubits[max_index - 1]
-        if slack:
+        if slack and filling[i] <  fillgrade:
             gate_specs = np.hstack((gate_specs, rng.choice(gates_1q, size=slack)))
 
         # For efficiency in the Python loop, this uses Numpy vectorisation to pre-calculate the

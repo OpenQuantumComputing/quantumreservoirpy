@@ -14,6 +14,7 @@ def listify(elem):
 
 
 def _simulate(circuit, shots, transpile, simulator):
+    print(f'Using backend {simulator}')
     simulator = Aer.get_backend(simulator)
     if transpile:
         circuit = qs.transpile(circuit, simulator)

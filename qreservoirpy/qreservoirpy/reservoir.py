@@ -21,6 +21,7 @@ class QReservoir:
         self.n_features = self.analyze_fcn(np.zeros(2*len(self.qreg)))
 
     def run(self, timeseries, shots=10000, transpile=False, simulator='aer_simulator_statevector'):
+        print("Started running")
         self.total_runned += len(timeseries)
 
 
@@ -32,7 +33,8 @@ class QReservoir:
                 pbar.update(Nold-Nnew)
 
                 circ = self.__build()
-                mem = utilities.simulate(circ, shots, transpile)
+                print("Building finished")
+                mem = utilities.simulate(circ, shots, transpile, simulator)
                 self.states.append(self.analyze_fcn(utilities.memory_to_mean(mem, 1)))
 
 
@@ -58,6 +60,7 @@ class QReservoir:
         return num_meas
 
     def __build(self):
+        print("Building... ")
         ## There are probably more efficient ways of doing this
         num_meas = self.__get_num_measurements()
         creg = ClassicalRegister(num_meas)

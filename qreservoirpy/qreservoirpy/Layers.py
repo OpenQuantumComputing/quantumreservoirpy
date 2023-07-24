@@ -61,7 +61,7 @@ class Timeseries(Layer):
     def build(self, circuit, **kwargs):
         start_idx = max(0, len(self.timeseries) - 2 * self.M)
         for timestep in self.timeseries[start_idx:]:
-            circuit = self.build_method(circuit, timestep, **self.kwargs, **kwargs)
+            self.build_method(circuit, timestep, **self.kwargs, **kwargs)
 
         return circuit
 
