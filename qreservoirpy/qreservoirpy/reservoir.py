@@ -25,17 +25,23 @@ class QReservoir:
         self.total_runned += len(timeseries)
 
 
+
         with tqdm(total=len(timeseries)) as pbar:
+            pbar.set_postfix(running="Setup", refresh=False)
             while len(timeseries) > 0:
                 Nold = len(timeseries)
                 timeseries = self.add_timeseries(timeseries)
-                Nnew = len(timeseries)
-                pbar.update(Nold-Nnew)
 
+
+                pbar.set_postfix(running="Building", refresh=True)
                 circ = self.__build()
-                print("Building finished")
+                pbar.set_postfix(running="Simulating", refresh=True)
+
                 mem = utilities.simulate(circ, shots, transpile, simulator)
                 self.states.append(self.analyze_fcn(utilities.memory_to_mean(mem, 1)))
+
+                Nnew = len(timeseries)
+                pbar.update(Nold-Nnew)
 
 
         return np.array(self.states).reshape((self.total_runned, -1))
@@ -60,7 +66,6 @@ class QReservoir:
         return num_meas
 
     def __build(self):
-        print("Building... ")
         ## There are probably more efficient ways of doing this
         num_meas = self.__get_num_measurements()
         creg = ClassicalRegister(num_meas)
