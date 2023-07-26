@@ -1,5 +1,6 @@
 from qiskit import Aer
 import qiskit as qs
+from qiskit.quantum_info import SparsePauliOp
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -81,3 +82,14 @@ def NARMA(n, num, alpha=0.3, beta=0.05, gamma=1.5, delta=0.1):
 def NMSE(x, y):
     return np.sum((x-y)**2) / np.sum(y**2)
 
+
+def random_ising_H(num_qubits, num_terms, low=-0.5, high=0.5):
+    possibles = ["I", "X", "Y", "Z"]
+
+    weights = np.random.uniform(low=low, high=high)
+
+    ops = np.random.choice(possibles, size=(num_terms, num_qubits))
+    pauli_strings = ["".join(op) for op in ops]
+    return SparsePauliOp(
+        data=pauli_strings, coeffs=weights
+    ).to_operator()

@@ -17,17 +17,19 @@ class QReservoir:
         self.kwargs = kwargs
         self.analyze_fcn = analyze_function
 
+        self.n_features = -1
+
     def predict(self, num_pred, model, from_series=[], shots=10000, low=-np.inf, high=np.inf):
         pred_series = from_series
         for _ in tqdm(range(num_pred), desc="Predicting"):
-            state = self.run(pred_series, incrementally=False, shots=shots, disable_status_bar=True)
-            pred = model.predict(state)
+            state = self.run(pred_series, incrementally=False, shots=shots, disable_status_bar=True).reshape((-1, self.n_features))
+            pred = model(state[-1])
 
             pred = min(pred, high)
             pred = max(pred, low)
 
             pred_series = np.append(pred_series, pred)
-        return pred_series
+        return pred_series[-num_pred:]
 
     def run(self, timeseries, shots=10000, transpile=False, incrementally=False, disable_status_bar=False, simulator='aer_simulator_statevector'):
         len_timeseries = len(timeseries)
@@ -42,18 +44,21 @@ class QReservoir:
 
         result = []
         for series in tqdm(timeseries, desc="Simulating", disable=disable_status_bar):
+
             circ = self.__build(series)
 
             mem = utilities.simulate(circ, shots, transpile, simulator)
 
             result.append(self.analyze_fcn(utilities.memory_to_mean(mem, 1)))
 
-
         result = np.array(result)
-        if incrementally:
-            return result.reshape((len_timeseries, -1))
+        if self.n_features < 0:
+            res = result.reshape((len_timeseries, -1))
+            self.n_features = res.shape[-1]
+            return res
+        return result.reshape((-1, self.n_features))
 
-        return result.reshape((len_timeseries, -1))
+
 
     @property
     def circuit(self):
