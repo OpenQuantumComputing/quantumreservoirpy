@@ -19,8 +19,8 @@ class QReservoir:
 
     def predict(self, num_pred, model, from_series=[], shots=10000, low=-np.inf, high=np.inf):
         pred_series = from_series
-        for _ in range(num_pred):
-            state = self.run(pred_series, incrementally=False, shots=shots)
+        for _ in tqdm(range(num_pred), desc="Predicting"):
+            state = self.run(pred_series, incrementally=False, shots=shots, disable_status_bar=True)
             pred = model.predict(state)
 
             pred = min(pred, high)
@@ -29,7 +29,7 @@ class QReservoir:
             pred_series = np.append(pred_series, pred)
         return pred_series
 
-    def run(self, timeseries, shots=10000, transpile=False, incrementally=False, simulator='aer_simulator_statevector'):
+    def run(self, timeseries, shots=10000, transpile=False, incrementally=False, disable_status_bar=False, simulator='aer_simulator_statevector'):
         len_timeseries = len(timeseries)
 
         M = min(self.M, len_timeseries)
@@ -41,20 +41,19 @@ class QReservoir:
             timeseries = [timeseries[-M:]]
 
         result = []
-        with tqdm(total=len(timeseries), desc="Simulating") as pbar:
-            for series in timeseries:
-                circ = self.__build(series)
+        for series in tqdm(timeseries, desc="Simulating", disable=disable_status_bar):
+            circ = self.__build(series)
 
-                mem = utilities.simulate(circ, shots, transpile, simulator)
+            mem = utilities.simulate(circ, shots, transpile, simulator)
 
-                result.append(self.analyze_fcn(utilities.memory_to_mean(mem, 1)))
+            result.append(self.analyze_fcn(utilities.memory_to_mean(mem, 1)))
 
-                pbar.update(1)
 
         result = np.array(result)
         if incrementally:
             return result.reshape((len_timeseries, -1))
-        return result.reshape((1, -1))
+
+        return result.reshape((len_timeseries, -1))
 
     @property
     def circuit(self):

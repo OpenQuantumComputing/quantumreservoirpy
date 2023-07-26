@@ -38,7 +38,7 @@ res.circuit.draw('mpl')
 When the `QReservoir` is run or drawn, it creates a `QuantumCircuit` and loops through the *layers* variable, appending to the circuit.
 ## Timeseries
 
-By far the most important Layer, is `Layers.Timeseries`. This layer creates a highly customizable periodic circuit used to specify what measurements and/or operations to be done for every timestep. The following example 
+By far the most important Layer, is `Layers.Timeseries`. This layer creates a highly customizable periodic circuit used to specify what measurements and/or operations to be done for every timestep. The following example
 ```python
 from qreservoirpy import QReservoir, Layers
 def build_method(circuit, timestep):
@@ -193,7 +193,7 @@ class Layer(ABC):
 
     # When this function is called on a layer,
     # it should return an integer overestimating the number
-    # of measurements the layer is goind to perform.
+    # of measurements the layer is going to perform.
     @abstractmethod
     def get_num_measurements(self, qreg, timeseries):
         return 0

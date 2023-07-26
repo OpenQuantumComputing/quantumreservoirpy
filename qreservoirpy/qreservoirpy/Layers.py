@@ -6,7 +6,7 @@ class Layer(ABC):
 
     # When this function is called on a layer,
     # it should return an integer overestimating the number
-    # of measurements the layer is goind to perform.
+    # of measurements the layer is going to perform.
     @abstractmethod
     def get_num_measurements(self, qreg, timeseries):
         return 0
