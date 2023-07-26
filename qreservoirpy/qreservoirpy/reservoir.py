@@ -8,30 +8,40 @@ from tqdm import tqdm
 
 
 class QReservoir:
-    def __init__(self, qubits, layers, analyze_function=lambda res:res, incrementally=False, M=np.inf, **kwargs) -> None:
+    def __init__(self, qubits, layers, analyze_function=lambda res:res,  M=np.inf, **kwargs) -> None:
         self.qreg = QuantumRegister(qubits, name='q')
         self.layers = layers
 
-        self.incrementally = incrementally
         self.M = M
 
         self.kwargs = kwargs
         self.analyze_fcn = analyze_function
 
+    def predict(self, num_pred, model, from_series=[], shots=10000, low=-np.inf, high=np.inf):
+        pred_series = from_series
+        for _ in range(num_pred):
+            state = self.run(pred_series, incrementally=False, shots=shots)
+            pred = model.predict(state)
 
-    def run(self, timeseries, shots=10000, transpile=False, simulator='aer_simulator_statevector'):
+            pred = min(pred, high)
+            pred = max(pred, low)
+
+            pred_series = np.append(pred_series, pred)
+        return pred_series
+
+    def run(self, timeseries, shots=10000, transpile=False, incrementally=False, simulator='aer_simulator_statevector'):
         len_timeseries = len(timeseries)
 
-        if self.incrementally:
+        M = min(self.M, len_timeseries)
+        if incrementally:
             timeseries = [
-                timeseries[:i+1][-self.M:] for i in range(len_timeseries)
+                timeseries[:i+1][-M:] for i in range(len_timeseries)
             ]
         else:
-            timeseries = [timeseries]
+            timeseries = [timeseries[-M:]]
 
         result = []
-        with tqdm(total=len(timeseries)) as pbar:
-            pbar.set_description("Simulating")
+        with tqdm(total=len(timeseries), desc="Simulating") as pbar:
             for series in timeseries:
                 circ = self.__build(series)
 
@@ -41,8 +51,10 @@ class QReservoir:
 
                 pbar.update(1)
 
-
-        return np.array(result).reshape((len_timeseries, -1))
+        result = np.array(result)
+        if incrementally:
+            return result.reshape((len_timeseries, -1))
+        return result.reshape((1, -1))
 
     @property
     def circuit(self):

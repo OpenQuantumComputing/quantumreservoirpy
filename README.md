@@ -7,7 +7,7 @@ The *qreservoirpy* folder is structured as a python package and must therefore b
 This will install qreservoirpy, as well as the dependent packages (among others qiskit and scikit-learn)
 
 ## Interface
-The interface of this package is mostly based on the package [reservoirpy](https://github.com/reservoirpy/reservoirpy), and you should consider checking it out to better understand how to use qreservoirpy.
+The interface of this package is heavily inspired by  [reservoirpy](https://github.com/reservoirpy/reservoirpy). Consider checking out their tutorials to better understand this package.
 
 Using a reservoir is simple enough;
 ```python
@@ -17,11 +17,12 @@ timeseries = [0, 1, 2, 3]
 states = res.run(timeseries)
 ```
 
-The above code will embed the one-dimensional `timeseries` into a higher dimensional space using a quantum circuit. However, the exact nature of this embedding is largely dependent on what you write as `INIT`. The rest of this README is dedicated to the creation of `QReservoir`s.
+The above code will embed the one-dimensional `timeseries` into a higher dimensional space using a quantum circuit. However, the exact nature of this embedding depends strongly on what you write as `INIT`. The rest of this README is dedicated to the creation of `QReservoir`s.
 ## Simple Layers
 `QReservoir` has two main arguments: `qubits`, which specify the number of qubits the circuit should use, and `layers`, which is described below. The rest of the arguments are explained later.
 
-There are currently only three *Simple* layers implemented, and all are shown below.
+Some layers are more intuitive than others. Below, for exdample, are three layers which correspond to some of `qiskit`'s own operations.
+
 ```python
 from qreservoirpy import QReservoir, Layers
 res = QReservoir(qubits=4, layers=[
@@ -37,9 +38,7 @@ res.circuit.draw('mpl')
 When the `QReservoir` is run or drawn, it creates a `QuantumCircuit` and loops through the *layers* variable, appending to the circuit.
 ## Timeseries
 
-By far the most important Layer, is `Layers.Timeseries`. This layer creates a highly customizable periodic circuit used to specify what measurements and/or operations to be done for every timestep.
-### Simple example
-
+By far the most important Layer, is `Layers.Timeseries`. This layer creates a highly customizable periodic circuit used to specify what measurements and/or operations to be done for every timestep. The following example 
 ```python
 from qreservoirpy import QReservoir, Layers
 def build_method(circuit, timestep):
@@ -75,7 +74,7 @@ Both of these choices made the implementations of `build_method`'s more user-fri
 The *timestep* variable is a single timestep, and must be of dimension `(1, n)`.
 
 ### Adding parameters to `build_method`
-Consider the case where `build_method` should append a time dependent (i.e. depending on `timestep`) operator to the circuit . To allow for this, one could add extra variables to `build_method`, as long as the same variable is provided as an extra key-value-pair argument when initializing `Layers.Timeseries`. An example is shown below
+Consider the case where `build_method` should append a time dependent (i.e. depending on `timestep`) operator to the circuit. To allow for this, one can add extra variables to `build_method`, as long as the same variable is provided as a key-value-pair argument when initializing `Layers.Timeseries`. An example is shown below
 
 ```python
 from qreservoirpy import QReservoir, Layers
@@ -106,7 +105,7 @@ fig = res.circuit.draw('mpl')
 ![Image](ReadmeData/Images/adding_parameters.jpg)
 
 ### `Incrementally=True`
-Many features of `qreservoirpy` was implemented to reproduce the work of [[1]](#1). One of them, is the keyword `Incrementally` in a `Layers.Timeseries`.
+Many features of `qreservoirpy` was implemented to reproduce the work of [[1]](#1). One of them, is the keyword `Incrementally`.
 
 Consider the following code
 ```python
@@ -123,11 +122,10 @@ res = QReservoir(qubits=4, layers=[
     Layers.H(),
     Layers.Timeseries(
         build_method=build_method,
-        incrementally=True,
         operator = random_unitary(2**4)
         ),
     Layers.Measurement(range(4))
-])
+], incrementally=True)
 res.run(timeseries)
 fig = res.circuit.draw('mpl')
 ```
@@ -172,7 +170,7 @@ res.run(timeseries)
 `analyze_fcn` will ensure that only the last four measurements (the ones from the measurement layer) are kept as state variables. The above code was used to create the last timeseries.
 
 ### `M`
-When `Incrementally=True`, one could want to only make a subset of the circuit, rather than using the entire timeseries every experiment. The `M` variable in `Layers.Timeseries` does exactly this. If `Incrementally=True` and `M = 2`, a call to `res.run([0, 1, 2, 3, 4, 5])` would result in the following 'incremental' experiments:
+When `Incrementally=True`, one could want to only make a subset of the circuit, rather than using the entire timeseries every experiment. The `M` argument does exactly this. If `Incrementally=True` and `M = 4`, a call to `res.run([0, 1, 2, 3, 4, 5])` would result in the following 'incremental' experiments:
 
 - `timeseries=[0]`
 - `timeseries=[0, 1]`
@@ -181,9 +179,35 @@ When `Incrementally=True`, one could want to only make a subset of the circuit, 
 - `timeseries=[1, 2, 3, 4]`
 - `timeseries=[2, 3, 4, 5]`
 
-Where only the last `2M` timesteps are used at a time.
+Where only the last `M` timesteps are used at a time.
 
 By default, `M=np.inf`.
+
+## Custom layers
+There are, of course, circuits that are impossible to create using the already existing framework. If one needs a new layer altogether, you can easily create one.
+
+In the qreservoirpy/Layers.py file, there is an absract base-class of the form
+
+```python
+class Layer(ABC):
+
+    # When this function is called on a layer,
+    # it should return an integer overestimating the number
+    # of measurements the layer is goind to perform.
+    @abstractmethod
+    def get_num_measurements(self, qreg, timeseries):
+        return 0
+
+    # Main build method for layer. Append operations to the
+    # end of the circuit, and return the finished circuit.
+    # **kwargs correspond directly to key-word-arguments provided
+    # when initializing the reservoir, and are available for use.
+    @abstractmethod
+    def build(self, circuit, timeseries, **kwargs):
+        return circuit
+```
+
+Create your custom layer in the Layers.py file by subclassing `Layer`. Feel free to draw inspiration from the other layers in the file.
 ## References
 <a id="1">[1]</a>
 Chen et al. (2020)

@@ -3,10 +3,18 @@ import numpy as np
 
 from abc import ABC, abstractmethod #For the abstract Layer base class
 class Layer(ABC):
+
+    # When this function is called on a layer,
+    # it should return an integer overestimating the number
+    # of measurements the layer is goind to perform.
     @abstractmethod
     def get_num_measurements(self, qreg, timeseries):
         return 0
 
+    # Main build method for layer. Append operations to the
+    # end of the circuit, and return the finished circuit.
+    # **kwargs correspond directly to key-word-arguments provided
+    # when initializing the reservoir, and are available for use.
     @abstractmethod
     def build(self, circuit, timeseries, **kwargs):
         return circuit
