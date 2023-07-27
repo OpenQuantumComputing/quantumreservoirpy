@@ -21,15 +21,18 @@ class QReservoir:
 
     def predict(self, num_pred, model, from_series=[], shots=10000, low=-np.inf, high=np.inf):
         pred_series = from_series
+        states = []
         for _ in tqdm(range(num_pred), desc="Predicting"):
-            state = self.run(pred_series, incrementally=False, shots=shots, disable_status_bar=True).reshape((-1, self.n_features))
-            pred = model(state[-1])
+            state = self.run(pred_series, incrementally=False, shots=shots, disable_status_bar=True).reshape((1, -1))
+            states.append(state)
 
+            pred = model.predict(state)
             pred = min(pred, high)
             pred = max(pred, low)
 
             pred_series = np.append(pred_series, pred)
-        return pred_series[-num_pred:]
+
+        return np.array(states).reshape((num_pred, -1)), pred_series[-num_pred:]
 
     def run(self, timeseries, shots=10000, transpile=False, incrementally=False, disable_status_bar=False, simulator='aer_simulator_statevector'):
         len_timeseries = len(timeseries)
