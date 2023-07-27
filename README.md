@@ -122,11 +122,12 @@ res = QReservoir(qubits=4, layers=[
     Layers.H(),
     Layers.Timeseries(
         build_method=build_method,
+
         operator = random_unitary(2**4)
         ),
     Layers.Measurement(range(4))
-], incrementally=True)
-res.run(timeseries)
+])
+res.run(timeseries, incrementally=True)
 fig = res.circuit.draw('mpl')
 ```
 ![Image](ReadmeData/Images/incrementally.jpg)
@@ -159,12 +160,12 @@ res = QReservoir(qubits=4, layers=[
     Layers.H(),
     Layers.Timeseries(
         build_method=build_method,
-        incrementally=True,
         operator = random_unitary(2**4),
         ),
     Layers.Measurement(range(4))
 ], analyze_function=analyze_fcn)
-res.run(timeseries)
+res.run(timeseries, incrementally=True)
+fig = res.circuit.draw('mpl')
 ```
 
 `analyze_fcn` will ensure that only the last four measurements (the ones from the measurement layer) are kept as state variables. The above code was used to create the last timeseries.
