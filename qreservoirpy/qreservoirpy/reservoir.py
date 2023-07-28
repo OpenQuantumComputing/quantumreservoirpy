@@ -19,18 +19,27 @@ class QReservoir:
 
         self.n_features = -1
 
-    def predict(self, num_pred, model, from_series=[], shots=10000, low=-np.inf, high=np.inf):
-        pred_series = from_series
+
+        self.timeseries = []
+
+    def predict(self, num_pred, model, from_series, shots=10000, low=-np.inf, high=np.inf):
+        M = min(self.M, len(from_series))
+        pred_series = from_series[-M:]
+
         states = []
-        for _ in tqdm(range(num_pred), desc="Predicting"):
-            state = self.run(pred_series, incrementally=False, shots=shots, disable_status_bar=True).reshape((1, -1))
-            states.append(state)
+        total = int(num_pred * M + num_pred * (num_pred + 1) / 2)
+        with tqdm(total=total, desc="Predicting") as pbar:
+            for _ in range(num_pred):
+                state = self.run(pred_series, incrementally=False, shots=shots, disable_status_bar=True).reshape((-1, self.n_features))
+                state = state[-1].reshape((1, -1))
+                states.append(state)
 
-            pred = model.predict(state)
-            pred = min(pred, high)
-            pred = max(pred, low)
+                pred = model.predict(state)
+                pred = min(pred, high)
+                pred = max(pred, low)
 
-            pred_series = np.append(pred_series, pred)
+                pred_series = np.append(pred_series, pred)
+                pbar.update(len(pred_series))
 
         return np.array(states).reshape((num_pred, -1)), pred_series[-num_pred:]
 
@@ -44,6 +53,8 @@ class QReservoir:
             ]
         else:
             timeseries = [timeseries[-M:]]
+
+        self.timeseries = timeseries[-1]
 
         result = []
         for series in tqdm(timeseries, desc="Simulating", disable=disable_status_bar):
@@ -65,7 +76,9 @@ class QReservoir:
 
     @property
     def circuit(self):
-        return self.__build([0, 1, 0, 1])
+        if len(self.timeseries) == 0:
+            return self.__build([0, 1])
+        return self.__build(self.timeseries)
 
 
     def __get_num_measurements(self, series):

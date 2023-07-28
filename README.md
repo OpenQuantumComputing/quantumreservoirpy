@@ -17,8 +17,9 @@ timeseries = [0, 1, 2, 3]
 states = res.run(timeseries)
 ```
 
-The above code will embed the one-dimensional `timeseries` into a higher dimensional space using a quantum circuit. However, the exact nature of this embedding depends strongly on what you write as `INIT`. The rest of this README is dedicated to the creation of `QReservoir`s.
-## Simple Layers
+The above code will embed the one-dimensional `timeseries` into a higher dimensional space using a quantum circuit. However, the exact nature of this embedding depends strongly on what you write as `INIT`.
+## Layers
+### Simple
 `QReservoir` has two main arguments: `qubits`, which specify the number of qubits the circuit should use, and `layers`, which is described below. The rest of the arguments are explained later.
 
 Some layers are more intuitive than others. Below, for exdample, are three layers which correspond to some of `qiskit`'s own operations.
@@ -36,7 +37,7 @@ res.circuit.draw('mpl')
 ![Image](ReadmeData/Images/simple.jpg)
 
 When the `QReservoir` is run or drawn, it creates a `QuantumCircuit` and loops through the *layers* variable, appending to the circuit.
-## Timeseries
+### Timeseries
 
 By far the most important Layer, is `Layers.Timeseries`. This layer creates a highly customizable periodic circuit used to specify what measurements and/or operations to be done for every timestep. The following example
 ```python
@@ -56,7 +57,7 @@ fig = res.circuit.draw('mpl')
 ![Image](ReadmeData/Images/simple_timeseries.jpg)
 
 
-### `build_method`
+#### `build_method`
 The Timeseries Layers takes as an argument `build_methods` which is a function of the format
 ```python
 def build_method(circuit, timestep):
@@ -73,7 +74,7 @@ Both of these choices made the implementations of `build_method`'s more user-fri
 
 The *timestep* variable is a single timestep, and must be of dimension `(1, n)`.
 
-### Adding parameters to `build_method`
+#### Adding parameters to `build_method`
 Consider the case where `build_method` should append a time dependent (i.e. depending on `timestep`) operator to the circuit. To allow for this, one can add extra variables to `build_method`, as long as the same variable is provided as a key-value-pair argument when initializing `Layers.Timeseries`. An example is shown below
 
 ```python
@@ -183,7 +184,7 @@ When `Incrementally=True`, one could want to only make a subset of the circuit, 
 Where only the last `M` timesteps are used at a time.
 
 By default, `M=np.inf`.
-
+## Prediction
 ## Custom layers
 There are, of course, circuits that are impossible to create using the already existing framework. If one needs a new layer altogether, you can easily create one.
 
@@ -209,6 +210,9 @@ class Layer(ABC):
 ```
 
 Create your custom layer in the Layers.py file by subclassing `Layer`. Feel free to draw inspiration from the other layers in the file.
+
+
+
 ## References
 <a id="1">[1]</a>
 Chen et al. (2020)
