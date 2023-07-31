@@ -1,57 +1,102 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from qiskit.quantum_info import random_unitary
-from qiskit.extensions import HamiltonianGate
 from qreservoirpy import QReservoir, Layers, utilities
 
-n_qubits = 6
-SHOTS = 1000
-H = utilities.random_ising_H(num_qubits=n_qubits, num_terms=10)
-T = 1 #s
-UT = HamiltonianGate(H, T, label="UT")
-ANSWER = [0, 1, 1, 1, 1, 1, 1, 2] + [0, 1, 1, 1, 1, 1, 1,  3]
-N_T = 20
-timeseries = ANSWER * N_T
-M=16
+from qiskit.extensions import HamiltonianGate
+
+from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
+from sklearn.linear_model import RidgeClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from tqdm import tqdm
+
+from ulid import ULID
+
+models = np.array([
+    SVC(kernel=ker) for ker in ['linear', 'poly', 'rbf', 'sigmoid']
+] + [
+    RidgeClassifier(alpha=alph) for alph in np.linspace(0, 1e-3, 20)
+] + [
+    KNeighborsClassifier(n_neighbors=n) for n in range(1, 10)
+], dtype=object)
 
 
 
-def build_method(circ, timestep, resop, encoder):
-    # circ.measure([0, 1])
-    circ.initialize(encoder[timestep], [0, 1])
-    circ.unitary(resop, circ.qubits, label=resop.label)
-    return circ
-
-res = QReservoir(qubits=n_qubits, layers=[
-    Layers.Reset(),
-    Layers.Timeseries(build_method=build_method),
-    Layers.Measurement(range(3))
-], resop = UT,
- encoder = {
+n_qubits = 4
+SHOTS = 10
+timeseries = [0, 1, 2, 1, 2] * 10
+encoder = {
     0: '00',
     1: '01',
     2: '10',
     3: '11'
-}, M=M)
+}
 
-res.circuit.draw('mpl')
+placement = {
+    0: [0, 1],
+    1: [1, 2],
+    2: [2, 3],
+}
 
-states = res.run(timeseries, shots=SHOTS, incrementally=True)
-import matplotlib.pyplot as plt
-import numpy as np
-WARMUP = 0.1
+H = utilities.random_ising_H(num_qubits=n_qubits, num_terms=160)
 
-warmup = int(len(states) * WARMUP)
-xx = states[:, 0][warmup:]
-yy = states[:, 1][warmup:]
-zz = states[:, 2][warmup:]
-fig = plt.figure()
-ax = fig.add_subplot(projection='3d')
 
-cmap = plt.get_cmap('jet', len(np.unique(timeseries)))
-for i, x, y, z in zip(timeseries, xx, yy, zz):
-    ax.scatter(x, y, z, c=cmap(i))
-ax.set_xlabel('state 1')
-ax.set_ylabel('state 2')
-ax.set_zlabel('state 3')
-plt.show()
+tvals = np.linspace(0.1, 5, 10)
+
+experiment_results = np.zeros_like(tvals)
+experiment_methods = []
+
+
+for exp_id in tqdm(range(len(tvals)), desc="EXPERIMENT"):
+# T = 0.2#s
+    T = tvals[exp_id]
+
+    UT = HamiltonianGate(H, T, label="UT")
+
+
+    def build_method(circuit, timestep, encoding, reservoir, pos):
+        circuit.measure(range(4))
+        # circuit.reset(range(4))
+        circuit.initialize(encoding[timestep], pos[timestep])
+        # circuit.initialize(encoding[timestep], [0, 1])
+        # circuit.initialize(encoding[timestep], [2, 3])
+        circuit.unitary(reservoir, circuit.qubits)
+
+    qres = QReservoir(qubits=n_qubits, layers=[
+        Layers.Reset(),
+        Layers.Timeseries(build_method=build_method,
+                        encoding = encoder,
+                        reservoir = UT,
+                        pos = placement)
+    ])
+
+    states = qres.run(
+        timeseries=timeseries,
+        shots=SHOTS,
+        disable_status_bar=True
+    )
+
+
+    WARMUP = 0.1 # 10%
+    warmup_idx = int(len(states) * WARMUP)
+
+    xstates = states[:-1][warmup_idx:]
+    target = timeseries[1:][warmup_idx:]
+
+    results = np.zeros(len(models))
+
+    N = 100
+    for _ in range(N):
+        X_train, X_test, y_train, y_test = train_test_split(xstates, target, test_size=1/3)
+        for i, model in enumerate(models):
+            model.fit(X_train, y_train)
+            score = model.score(X_test, y_test)
+            results[i] += score
+
+    results /= N
+
+    sorting = np.flip(np.argsort(results))
+
+    experiment_methods.append([models[sorting][:5]])
+    experiment_results[exp_id] = results[sorting][0]
+

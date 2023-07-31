@@ -3,16 +3,15 @@ import numpy as np
 import json
 
 class Experiment:
-    def __init__(self, reservoir, models, timeseries, SHOTS=10000, WARMUP=0.1, num_experiments=1):
-        self.reservoir = reservoir
+    def __init__(self, reservoirs, models):
+        self.reservoirs = reservoirs
         self.models = models
 
-        self.timeseries = timeseries
-        self.shots = SHOTS
-        self.WARMUP = WARMUP
-        self.num_experiments = num_experiments
+    def run(self,
+            timeseries, # list of timeseries to be checked
 
-    def run(self):
+            warmup_percentage=0,
+            repeat=1):
 
         self.states = self.reservoir.run(
             timeseries = self.timeseries,
@@ -25,13 +24,17 @@ class Experiment:
         target = self.timeseries[1:][warmup_idx:]
 
         self.results = np.zeros(len(self.models))
-        for _ in range(self.num_experiments):
+
+        # Measure performance
+        train_test_split_sampling = 100
+        for _ in range(train_test_split_sampling):
             X_train, X_test, y_train, y_test = train_test_split(xstates, target, test_size=0.33)
             for i, model in enumerate(self.models):
                 model.fit(X_train, y_train)
                 score = model.score(X_test, y_test)
                 self.results[i] += score
-        self.results /= self.num_experiments
+        self.results /= train_test_split_sampling
+
         self.save("test.json")
 
     def toJSON(self):
