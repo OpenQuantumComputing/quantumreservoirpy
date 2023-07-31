@@ -4,8 +4,6 @@ from qiskit.quantum_info import SparsePauliOp
 import numpy as np
 import matplotlib.pyplot as plt
 
-from .randomcircuit import random_circuit
-
 
 def listify(elem):
     try:
@@ -84,12 +82,18 @@ def NMSE(x, y):
 
 
 def random_ising_H(num_qubits, num_terms, low=-0.5, high=0.5):
-    possibles = ["I", "X", "Y", "Z"]
+    possibles = ["X", "Y", "Z"]
 
     weights = np.random.uniform(low=low, high=high)
 
-    ops = np.random.choice(possibles, size=(num_terms, num_qubits))
-    pauli_strings = ["".join(op) for op in ops]
+    ops = np.full(shape=(num_terms, num_qubits), fill_value="I")
+
+    ops[:, :2] = np.random.choice(possibles, size=(num_terms, 2))
+
+    pauli_strings = [['IIII']]*num_terms
+    for i in range(num_terms):
+        pauli_strings[i] = "".join(ops[i][np.random.permutation(num_qubits)])
+
     return SparsePauliOp(
         data=pauli_strings, coeffs=weights
     ).to_operator()
