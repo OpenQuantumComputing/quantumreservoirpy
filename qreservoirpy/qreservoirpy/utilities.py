@@ -3,6 +3,9 @@ import qiskit as qs
 from qiskit.quantum_info import SparsePauliOp
 import numpy as np
 import matplotlib.pyplot as plt
+from .randomcircuit import random_circuit
+from sklearn.model_selection import train_test_split
+from qiskit.providers.fake_provider import FakeManilaV2
 
 
 def listify(elem):
@@ -12,14 +15,15 @@ def listify(elem):
         return [elem]
 
 
-def _simulate(circuit, shots, transpile, simulator):
-    simulator = Aer.get_backend(simulator)
+def _simulate(circuit, shots, transpile, backend):
+    if backend is None:
+        backend = Aer.get_backend("aer_simulator_statevector")
     if transpile:
-        circuit = qs.transpile(circuit, simulator)
-    return simulator.run(circuit, shots=shots, memory=True).result()
+        circuit = qs.transpile(circuit, backend)
+    return backend.run(circuit, shots=shots, memory=True).result()
 
-def simulate(circuit, shots, transpile, simulator='aer_simulator_statevector'):
-    return _simulate(circuit, shots, transpile, simulator).get_memory()
+def simulate(circuit, shots, transpile, backend):
+    return _simulate(circuit, shots, transpile, backend).get_memory()
 
 def memory_to_mean(memory, meas_per_timestep):
         # Takes in memory of the form [1010101001, 1010010101, 0010110010 ...]
@@ -81,7 +85,7 @@ def NMSE(x, y):
     return np.sum((x-y)**2) / np.sum(y**2)
 
 
-def random_ising_H(num_qubits, num_terms, low=-0.5, high=0.5):
+def random_ising_H(num_qubits, num_terms, low=-0.5, high=0.5, h=0):
     possibles = ["X", "Y", "Z"]
 
     weights = np.random.uniform(low=low, high=high)
@@ -97,3 +101,15 @@ def random_ising_H(num_qubits, num_terms, low=-0.5, high=0.5):
     return SparsePauliOp(
         data=pauli_strings, coeffs=weights
     ).to_operator()
+
+
+def stress_test_models(X_data, y_data, models, test_to_train_ratio=1/3, N=100):
+
+    results = np.zeros(len(models))
+    for _ in range(N):
+        X_train, X_test, y_train, y_test = train_test_split(X_data, y_data, test_size=test_to_train_ratio)
+        for i, model in enumerate(models):
+            model.fit(X_train, y_train)
+            score = model.score(X_test, y_test)
+            results[i] += score
+    return results/N

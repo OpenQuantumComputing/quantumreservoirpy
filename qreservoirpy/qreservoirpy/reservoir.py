@@ -43,7 +43,7 @@ class QReservoir:
 
         return np.array(states).reshape((num_pred, -1)), pred_series[-num_pred:]
 
-    def run(self, timeseries, shots=10000, transpile=False, incrementally=False, disable_status_bar=False, simulator='aer_simulator_statevector'):
+    def run(self, timeseries, shots=10000, transpile=False, incrementally=False, disable_status_bar=False, backend=None):
         len_timeseries = len(timeseries)
 
         M = min(self.M, len_timeseries)
@@ -61,7 +61,7 @@ class QReservoir:
 
             circ = self.__build(series)
 
-            mem = utilities.simulate(circ, shots, transpile, simulator)
+            mem = utilities.simulate(circ, shots, transpile, backend)
 
             result.append(self.analyze_fcn(utilities.memory_to_mean(mem, 1)))
 
