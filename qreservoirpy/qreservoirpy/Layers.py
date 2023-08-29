@@ -3,73 +3,64 @@ import numpy as np
 
 from abc import ABC, abstractmethod #For the abstract Layer base class
 class Layer(ABC):
+
+    # When this function is called on a layer,
+    # it should return an integer overestimating the number
+    # of measurements the layer is going to perform.
     @abstractmethod
-    def get_num_measurements(self, qreg):
+    def get_num_measurements(self, qreg, timeseries):
         return 0
 
+    # Main build method for layer. Append operations to the
+    # end of the circuit, and return the finished circuit.
+    # **kwargs correspond directly to key-word-arguments provided
+    # when initializing the reservoir, and are available for use.
     @abstractmethod
-    def build(self, circuit, **kwargs):
+    def build(self, circuit, timeseries, **kwargs):
         return circuit
-
-    @abstractmethod
-    def add_timeseries(self, timeseries):
-        return timeseries
 
 
 class Reset(Layer):
-    def get_num_measurements(self, qreg):
-        return super().get_num_measurements(qreg)
-    def build(self, circuit, **kwargs):
+    def get_num_measurements(self, qreg, timeseries):
+        return super().get_num_measurements(qreg, timeseries)
+    def build(self, circuit, timeseries, **kwargs):
         circuit.reset(circuit.qubits)
         return circuit
-    def add_timeseries(self, timeseries):
-        return super().add_timeseries(timeseries)
+
+
 class H(Layer):
-    def get_num_measurements(self, qreg):
-        return super().get_num_measurements(qreg)
-    def build(self, circuit, **kwargs):
+    def get_num_measurements(self, qreg, timeseries):
+        return super().get_num_measurements(qreg, timeseries)
+    def build(self, circuit, timeseries, **kwargs):
         circuit.h(circuit.qubits)
         return circuit
-    def add_timeseries(self, timeseries):
-        return super().add_timeseries(timeseries)
+
+
 
 class Measurement(Layer):
     def __init__(self, measure_qubits) -> None:
         super().__init__()
         self.measure_qubits = measure_qubits
 
-    def get_num_measurements(self, qreg):
+    def get_num_measurements(self, qreg, timeseries):
         return len(self.measure_qubits)
-    def build(self, circuit, **kwargs):
+    def build(self, circuit, timeseries, **kwargs):
         circuit.measure(self.measure_qubits)
         return circuit
-    def add_timeseries(self, timeseries):
-        return super().add_timeseries(timeseries)
+
+
 
 class Timeseries(Layer):
-    def __init__(self, build_method, M=np.inf, incrementally=False, **kwargs) -> None:
+    def __init__(self, build_method, **kwargs) -> None:
         super().__init__()
         self.build_method = build_method
-        self.timeseries = np.zeros(0)
-        self.incrementally = incrementally
-        self.M = M
         self.kwargs = kwargs
 
-    def get_num_measurements(self, qreg):
-        return len(self.timeseries) * len(qreg)
+    def get_num_measurements(self, qreg, timeseries):
+        return len(timeseries) * len(qreg)
 
-    def build(self, circuit, **kwargs):
-        start_idx = max(0, len(self.timeseries) - 2 * self.M)
-        for timestep in self.timeseries[start_idx:]:
-            circuit = self.build_method(circuit, timestep, **self.kwargs, **kwargs)
+    def build(self, circuit, timeseries,  **kwargs):
+        for timestep in timeseries:
+            self.build_method(circuit, timestep, **self.kwargs, **kwargs)
 
         return circuit
-
-
-    def add_timeseries(self, timeseries):
-        if self.incrementally:
-            self.timeseries = np.append(self.timeseries, timeseries[0])
-            return timeseries[1:]
-        else:
-            self.timeseries = np.append(self.timeseries, timeseries)
-            return []

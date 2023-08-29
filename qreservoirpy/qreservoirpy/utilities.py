@@ -1,6 +1,11 @@
-from qiskit import transpile, Aer
+from qiskit import Aer
+import qiskit as qs
+from qiskit.quantum_info import SparsePauliOp
 import numpy as np
 import matplotlib.pyplot as plt
+from .randomcircuit import random_circuit
+from sklearn.model_selection import train_test_split
+from qiskit.providers.fake_provider import FakeManilaV2
 
 
 def listify(elem):
@@ -10,13 +15,15 @@ def listify(elem):
         return [elem]
 
 
-def _simulate(circuit, shots):
-    simulator = Aer.get_backend('aer_simulator_statevector')
-    circuit = transpile(circuit, simulator)
-    return simulator.run(circuit, shots=shots, memory=True).result()
+def _simulate(circuit, shots, transpile, backend):
+    if backend is None:
+        backend = Aer.get_backend("aer_simulator_statevector")
+    if transpile:
+        circuit = qs.transpile(circuit, backend)
+    return backend.run(circuit, shots=shots, memory=True).result()
 
-def simulate(circuit, shots):
-    return _simulate(circuit, shots).get_memory()
+def simulate(circuit, shots, transpile, backend):
+    return _simulate(circuit, shots, transpile, backend).get_memory()
 
 def memory_to_mean(memory, meas_per_timestep):
         # Takes in memory of the form [1010101001, 1010010101, 0010110010 ...]
@@ -39,7 +46,7 @@ def memory_to_mean(memory, meas_per_timestep):
         # Average over shots. Returned in format (timesteps, features)
         return np.flip(np.average(res, axis=0))
 
-def result_plotter(x, target, warmup=0):
+def result_plotter(x, target, warmup=0.0):
 
     warmup_len = int(len(target) * warmup)
     x = x[warmup_len:]
@@ -64,3 +71,45 @@ def result_plotter(x, target, warmup=0):
             ax.set_title(f'Feature {idx+1}')
             ax.legend(loc='upper right')
     return fig, axes
+
+def NARMA(n, num, alpha=0.3, beta=0.05, gamma=1.5, delta=0.1):
+    # NARMA model normalized between 0 and 1
+    y = np.zeros(num,dtype=np.float64)
+    u = np.random.uniform(low=0, high=0.5, size=num)
+    for i in range(n, len(y)):
+        y[i] = np.tanh(y[i-1] * (alpha + beta * np.sum(y[i-n:i])) + gamma*u[i-n] * u[i-1] + delta)
+
+    return (y + 1) / 2
+
+def NMSE(x, y):
+    return np.sum((x-y)**2) / np.sum(y**2)
+
+
+def random_ising_H(num_qubits, num_terms, low=-0.5, high=0.5, h=0):
+    possibles = ["X", "Y", "Z"]
+
+    weights = np.random.uniform(low=low, high=high)
+
+    ops = np.full(shape=(num_terms, num_qubits), fill_value="I")
+
+    ops[:, :2] = np.random.choice(possibles, size=(num_terms, 2))
+
+    pauli_strings = [['IIII']]*num_terms
+    for i in range(num_terms):
+        pauli_strings[i] = "".join(ops[i][np.random.permutation(num_qubits)])
+
+    return SparsePauliOp(
+        data=pauli_strings, coeffs=weights
+    ).to_operator()
+
+
+def stress_test_models(X_data, y_data, models, test_to_train_ratio=1/3, N=100):
+
+    results = np.zeros(len(models))
+    for _ in range(N):
+        X_train, X_test, y_train, y_test = train_test_split(X_data, y_data, test_size=test_to_train_ratio)
+        for i, model in enumerate(models):
+            model.fit(X_train, y_train)
+            score = model.score(X_test, y_test)
+            results[i] += score
+    return results/N

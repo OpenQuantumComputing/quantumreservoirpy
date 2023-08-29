@@ -3,64 +3,103 @@ from .interface import ReservoirCircuit
 
 from qiskit import QuantumRegister, ClassicalRegister
 import numpy as np
-
+from tqdm import tqdm
 
 
 
 class QReservoir:
-    def __init__(self, qubits, layers, analyze_function=lambda res: res, **kwargs) -> None:
+    def __init__(self, qubits, layers, analyze_function=lambda res:res,  M=np.inf, **kwargs) -> None:
         self.qreg = QuantumRegister(qubits, name='q')
         self.layers = layers
 
-        self.total_runned = 0
-        self.states = []
+        self.M = M
 
         self.kwargs = kwargs
         self.analyze_fcn = analyze_function
 
-    def run(self, timeseries, shots=10000):
-        self.total_runned += len(timeseries)
-        while len(timeseries) > 0:
-            timeseries = self.add_timeseries(timeseries)
-            circ = self.__build()
-            mem = utilities.simulate(circ, shots)
-            self.states.append(self.analyze_fcn(utilities.memory_to_mean(mem, 1)))
-        self.states = np.array(self.states)
-        self.states = self.states.reshape((self.total_runned, -1))
-        return self.states
+        self.n_features = -1
 
-    def add_timeseries(self, timeseries):
-        for layer in self.layers:
-            timeseries = layer.add_timeseries(timeseries)
-        return timeseries
+
+        self.timeseries = []
+
+    def predict(self, num_pred, model, from_series, shots=10000, backend=None):
+        M = min(self.M, len(from_series))
+        pred_series = from_series[-M:]
+
+        states = []
+        total = int(num_pred * M + num_pred * (num_pred + 1) / 2)
+        with tqdm(total=total, desc="Predicting") as pbar:
+            for _ in range(num_pred):
+                state = self.run(pred_series, incrementally=False, shots=shots, disable_status_bar=True, backend=backend, transpile=True).reshape((-1, self.n_features))
+                state = state[-1].reshape((1, -1))
+                states.append(state)
+
+                pred = model.predict(state)
+
+                pred_series = np.append(pred_series, pred)
+                pbar.update(len(pred_series))
+
+        return np.array(states).reshape((num_pred, -1)), pred_series[-num_pred:]
+
+    def run(self, timeseries, shots=10000, transpile=False, incrementally=False, disable_status_bar=False, backend=None):
+        len_timeseries = len(timeseries)
+
+        M = min(self.M, len_timeseries)
+        if incrementally:
+            timeseries = [
+                timeseries[:i+1][-M:] for i in range(len_timeseries)
+            ]
+        else:
+            timeseries = [timeseries[-M:]]
+
+        self.timeseries = timeseries[-1]
+
+        result = []
+        for series in tqdm(timeseries, desc="Simulating", disable=disable_status_bar):
+
+            circ = self.__build(series)
+
+            mem = utilities.simulate(circ, shots, transpile, backend)
+
+            result.append(self.analyze_fcn(utilities.memory_to_mean(mem, 1)))
+
+        result = np.array(result)
+        if self.n_features < 0:
+            res = result.reshape((len_timeseries, -1))
+            self.n_features = res.shape[-1]
+            return res
+        return result.reshape((-1, self.n_features))
+
+
 
     @property
     def circuit(self):
-        return self.__build()
+        if len(self.timeseries) == 0:
+            return self.__build([0, 1])
+        return self.__build(self.timeseries)
 
-    # @property
-    # def states(self):
-    #     return np.array(self.states)
 
-    def __get_num_measurements(self):
+    def __get_num_measurements(self, series):
         num_meas = 0
         for layer in self.layers:
-            num_meas += layer.get_num_measurements(self.qreg)
+            num_meas += layer.get_num_measurements(self.qreg, series)
         return num_meas
 
-    def __build(self):
-        num_meas = self.__get_num_measurements()
+
+    def __build(self, series):
+        ## There are probably more efficient ways of doing this
+        num_meas = self.__get_num_measurements(series)
         creg = ClassicalRegister(num_meas)
         circ = ReservoirCircuit(self.qreg, creg)
 
         for layer in self.layers:
-            circ = layer.build(circ, **self.kwargs)
+            circ = layer.build(circ, series, **self.kwargs)
 
         self.creq = ClassicalRegister(circ.RC_measured, name='c')
         newCirc = ReservoirCircuit(self.qreg, self.creq)
 
         for layer in self.layers:
-            newCirc = layer.build(newCirc, **self.kwargs)
+            newCirc = layer.build(newCirc, series, **self.kwargs)
         return newCirc
 
 
