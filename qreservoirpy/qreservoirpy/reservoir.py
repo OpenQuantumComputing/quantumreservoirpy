@@ -22,7 +22,7 @@ class QReservoir:
 
         self.timeseries = []
 
-    def predict(self, num_pred, model, from_series, shots=10000, low=-np.inf, high=np.inf):
+    def predict(self, num_pred, model, from_series, shots=10000, backend=None):
         M = min(self.M, len(from_series))
         pred_series = from_series[-M:]
 
@@ -30,13 +30,11 @@ class QReservoir:
         total = int(num_pred * M + num_pred * (num_pred + 1) / 2)
         with tqdm(total=total, desc="Predicting") as pbar:
             for _ in range(num_pred):
-                state = self.run(pred_series, incrementally=False, shots=shots, disable_status_bar=True).reshape((-1, self.n_features))
+                state = self.run(pred_series, incrementally=False, shots=shots, disable_status_bar=True, backend=backend, transpile=True).reshape((-1, self.n_features))
                 state = state[-1].reshape((1, -1))
                 states.append(state)
 
                 pred = model.predict(state)
-                pred = min(pred, high)
-                pred = max(pred, low)
 
                 pred_series = np.append(pred_series, pred)
                 pbar.update(len(pred_series))
