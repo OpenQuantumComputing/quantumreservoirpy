@@ -1,4 +1,4 @@
-from qreservoirpy import utilities
+from OLD import utilities
 from .interface import ReservoirCircuit
 
 from qiskit import QuantumRegister, ClassicalRegister

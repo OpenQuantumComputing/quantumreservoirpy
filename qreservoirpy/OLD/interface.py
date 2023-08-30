@@ -1,4 +1,4 @@
-from qreservoirpy import utilities
+from OLD import utilities
 from qiskit import QuantumCircuit
 from qiskit.circuit.instructionset import InstructionSet
 from qiskit.circuit.quantumcircuit import QubitSpecifier
