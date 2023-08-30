@@ -10,14 +10,10 @@ from qiskit.providers import Backend
 
 from tqdm import tqdm
 
-from util import listify
-import util
+from .util import listify, memory_to_mean
 import numpy as np
 
 class InterfaceCircuit(QuantumCircuit):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     def measure_all(self):
         return self.measure(self.qubits)
 
@@ -77,23 +73,32 @@ class QReservoir(BaseReservoir):
             return
 
         mem = self._job.result().get_memory()
-        avg = util.memory_to_mean(mem)
+        avg = memory_to_mean(mem)
 
         idx = len(avg) - self.post_meas
         during_data = avg[:idx]
         after_data = avg[idx:].reshape((1, -1))
 
-        if len(during_data) == 0:
+        if during_data.size == 0:
             return after_data
 
         during_data = during_data.reshape((len(timeseries), -1))
-        if len(after_data) == 0:
+        if after_data.size == 0:
             return during_data
 
         return during_data, after_data
 
-    def predict(self, num_pred, model, from_series, **kwargs):
-        state = self.run(from_series, kwargs=kwargs)
+    def predict(self, num_pred, model, from_series, analyze_fcn=lambda v : v[-1], **kwargs):
+        predictions = np.zeros(num_pred + len(from_series))
+        predictions[:len(from_series)] = from_series
+
+        for i in tqdm(range(num_pred), desc="Predicting..."):
+            curidx = len(from_series) + i
+            states = self.run(predictions[:curidx], kwargs=kwargs)
+            pred_state = analyze_fcn(states).reshape((1, -1))
+            predictions[curidx] = model.predict(pred_state)
+
+        return predictions[-num_pred:]
 
 
 
@@ -111,21 +116,21 @@ class QReservoir(BaseReservoir):
             circuits = [self.circuit(series, merge_registers=False).reverse_bits() for series in timeseries_splited]
 
             pbar.set_description("Running job...")
-            self._job = self.backend.run(circuits, memory=True, **kwargs)
+            self._job = self.backend.run(circuits, memory=analyze, **kwargs)
 
             if not analyze:
                 return
 
 
             result = self._job.result()
-            num_features = util.memory_to_mean(result.get_memory(0)).size
+            num_features = memory_to_mean(result.get_memory(0)).size
             states = np.zeros((len(timeseries_splited), num_features))
 
 
             pbar.set_description("Analyzing... ")
             for idx, _ in enumerate(timeseries_splited):
                 memory = self._job.result().get_memory(idx)
-                states[idx] = util.memory_to_mean(memory)
+                states[idx] = memory_to_mean(memory)
                 pbar.update(1)
 
             return states
@@ -138,8 +143,8 @@ class QReservoir(BaseReservoir):
         if merge_registers:
             temp_circ = CountingCircuit(self.n_qubits, circ.num_clbits)
             circ = self.__build(temp_circ, timeseries)
-
         return circ
+
 
     @property
     def job(self):
@@ -200,13 +205,13 @@ from qiskit_aer import AerSimulator
 res = BRes(n_qubits=4, backend=AerSimulator())
 
 
-# res.circuit([0, 1, 2], merge_registers=True).draw('mpl')
+# res.circuit([0, 1, 2] * 4, merge_registers=True).draw('mpl')
 
-states = res.run([0, 1, 2]*3, shots=100)
+states = res.run_incrementally([0, 1, 2]*10, M=20, shots=100)
 
-print(states)
+# print(states)
 # import matplotlib.pyplot as plt
 # res.__build([0, 1, 2, 3]).draw('mpl')
 
-# plt.show()
+plt.show()
 

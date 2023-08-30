@@ -9,7 +9,6 @@ class ReservoirCircuit(QuantumCircuit):
         self.num_meas = 0
         super().__init__(*args, **kwargs)
 
-        self.reverse_bits()
 
     def measure(self, qubit: QubitSpecifier) -> InstructionSet:
         qubit = utilities.listify(qubit)
