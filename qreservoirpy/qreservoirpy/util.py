@@ -1,5 +1,5 @@
 import numpy as np
-
+from .randomcircuit import random_circuit
 
 def listify(elem):
     try:
