@@ -15,10 +15,14 @@ class Static(QReservoir):
         mem = self._job.result().get_memory()
         avg = memory_to_mean(mem)
 
-        return avg.reshape((len(timeseries), -1))
+        states = avg.reshape((len(timeseries), -1))
+
+        self.last_state = states[-1].ravel()
+
+        return states
 
 
-    def predict(self, num_pred, model, from_series, **kwargs):
+    def predict(self, num_pred, model, from_series, from_state=None,**kwargs):
         M = min(num_pred + len(from_series), self.memory)
 
         predictions = np.zeros(num_pred + len(from_series))
@@ -26,9 +30,11 @@ class Static(QReservoir):
 
         for i in tqdm(range(num_pred), desc="Predicting..."):
             curidx = len(from_series) + i
-            states = self.run(predictions[:curidx][-M:], kwargs=kwargs)
+            states = self.run(predictions[:curidx][-M:], from_state, kwargs=kwargs)
+
             pred_state = states[-1].reshape((1, -1))
             predictions[curidx] = model.predict(pred_state)
+            self.last_state = pred_state.ravel()
 
         return predictions[-num_pred:]
 
