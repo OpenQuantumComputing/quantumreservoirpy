@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from qreservoirpy import QReservoir, Layers, utilities
+from OLD import QReservoir, Layers, utilities
 
 from qiskit.extensions import HamiltonianGate
 
