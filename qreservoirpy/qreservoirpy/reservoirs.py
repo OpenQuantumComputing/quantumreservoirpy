@@ -1,12 +1,16 @@
+import numpy as np
+
+from tqdm import tqdm
+
 from .reservoirbase import QReservoir
 from .util import memory_to_mean
 
-import numpy as np
-from tqdm import tqdm
 
 class Static(QReservoir):
     def run(self, timeseries, **kwargs):
-        circ = self.circuit(timeseries, merge_registers=False).reverse_bits()
+        transpile = kwargs.pop('transpile', True)
+        circ = self.circuit(timeseries, merge_registers=False, transpile=transpile).reverse_bits()
+
         self._job = self.backend.run(circ, memory=True, **kwargs)
         mem = self._job.result().get_memory()
         avg = memory_to_mean(mem)
@@ -36,7 +40,7 @@ class Incremental(QReservoir):
             self.num_features = num_features
 
     def run(self, timeseries, **kwargs):
-
+        transpile = kwargs.pop('transpile', True)
         M = min(len(timeseries), self.memory)
         timeseries_splited = [timeseries[:i+1][-M:] for i in range(len(timeseries))]
 
@@ -44,7 +48,7 @@ class Incremental(QReservoir):
 
         with tqdm(total=total) as pbar:
             pbar.set_description("Creating circuits...")
-            circuits = [self.circuit(series, merge_registers=False).reverse_bits() for series in timeseries_splited]
+            circuits = [self.circuit(series, merge_registers=False, transpile=transpile).reverse_bits() for series in timeseries_splited]
 
             pbar.set_description("Running job...")
             self._job = self.backend.run(circuits, memory=True, **kwargs)
@@ -68,7 +72,8 @@ class Incremental(QReservoir):
             return states
 
     def __run(self, timeseries, **kwargs):
-        circ = self.circuit(timeseries, merge_registers=False).reverse_bits()
+        transpile = kwargs.pop('transpile', True)
+        circ = self.circuit(timeseries, merge_registers=False, transpile=transpile).reverse_bits()
         self._job = self.backend.run(circ, memory=True, **kwargs)
         results = self._job.result()
 
