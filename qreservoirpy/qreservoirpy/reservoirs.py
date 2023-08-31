@@ -1,4 +1,4 @@
-from .qreservoir import QReservoir
+from .reservoirbase import QReservoir
 from .util import memory_to_mean
 
 import numpy as np
@@ -29,6 +29,12 @@ class Static(QReservoir):
         return predictions[-num_pred:]
 
 class Incremental(QReservoir):
+    def __init__(self, n_qubits, memory=np.inf, backend=None, num_features=-1) -> None:
+        super().__init__(n_qubits, memory, backend)
+
+        if num_features > 0:
+            self.num_features = num_features
+
     def run(self, timeseries, **kwargs):
 
         M = min(len(timeseries), self.memory)
@@ -44,14 +50,19 @@ class Incremental(QReservoir):
             self._job = self.backend.run(circuits, memory=True, **kwargs)
 
             result = self._job.result()
-            num_features = memory_to_mean(result.get_memory(0)).size
-            states = np.zeros((len(timeseries_splited), num_features))
+
+            if not hasattr(self, 'num_features'):
+                self.num_features = memory_to_mean(result.get_memory(0)).size
+
+            states = np.zeros((len(timeseries_splited), self.num_features))
 
 
             pbar.set_description("Analyzing... ")
             for idx, _ in enumerate(timeseries_splited):
                 memory = self._job.result().get_memory(idx)
-                states[idx] = memory_to_mean(memory)
+
+                avg = memory_to_mean(memory)[-self.num_features:]
+                states[idx, self.num_features - len(avg):] = avg
                 pbar.update(1)
 
             return states
@@ -60,7 +71,15 @@ class Incremental(QReservoir):
         circ = self.circuit(timeseries, merge_registers=False).reverse_bits()
         self._job = self.backend.run(circ, memory=True, **kwargs)
         results = self._job.result()
-        return memory_to_mean(results.get_memory())
+
+        avg = memory_to_mean(results.get_memory())
+        if hasattr(self, 'num_features'):
+            avg = avg[-self.num_features:]
+            temp = np.zeros(self.num_features)
+            temp[self.num_features - len(avg):] = avg
+            return temp
+
+        return avg
 
     def predict(self, num_pred, model, from_series, **kwargs):
         M = min(num_pred + len(from_series), self.memory)

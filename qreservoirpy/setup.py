@@ -11,6 +11,6 @@ INSTALL_REQUIRES = [
 ]
 
 setup(name='qreservoirpy',
-      version='0.1',
+      version='0.2',
       packages=['qreservoirpy'],
       install_requires=INSTALL_REQUIRES)
