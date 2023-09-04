@@ -8,6 +8,7 @@ import qiskit as qs
 from qiskit import Aer
 from qiskit.providers import Backend
 
+
 class BaseReservoir(ABC):
     """
     Interface for custom reservoirs. Please note that one should NOT
@@ -76,5 +77,8 @@ class QReservoir(BaseReservoir):
         self.after(circ)
 
         return circ
+
+
+
 
 

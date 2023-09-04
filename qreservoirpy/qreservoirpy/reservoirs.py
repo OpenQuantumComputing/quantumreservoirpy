@@ -22,7 +22,7 @@ class Static(QReservoir):
         return states
 
 
-    def predict(self, num_pred, model, from_series, from_state=None,**kwargs):
+    def predict(self, num_pred, model, from_series, **kwargs):
         M = min(num_pred + len(from_series), self.memory)
 
         predictions = np.zeros(num_pred + len(from_series))
@@ -30,7 +30,7 @@ class Static(QReservoir):
 
         for i in tqdm(range(num_pred), desc="Predicting..."):
             curidx = len(from_series) + i
-            states = self.run(predictions[:curidx][-M:], from_state, kwargs=kwargs)
+            states = self.run(predictions[:curidx][-M:],  kwargs=kwargs)
 
             pred_state = states[-1].reshape((1, -1))
             predictions[curidx] = model.predict(pred_state)
@@ -95,7 +95,9 @@ class Incremental(QReservoir):
     def predict(self, num_pred, model, from_series, **kwargs):
         M = min(num_pred + len(from_series), self.memory)
 
-        predictions = np.zeros(num_pred + len(from_series))
+        shape = np.array(np.shape(from_series))
+        shape[0] += num_pred
+        predictions = np.zeros(shape=shape)
         predictions[:len(from_series)] = from_series
 
         for i in tqdm(range(num_pred), desc="Predicting..."):
