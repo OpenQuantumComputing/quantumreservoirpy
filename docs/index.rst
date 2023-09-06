@@ -1,20 +1,37 @@
-.. QuantumReservoirPy documentation master file, created by
-   sphinx-quickstart on Tue Sep  5 15:58:44 2023.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
-Welcome to QuantumReservoirPy's documentation!
-==============================================
+.. QuantumReservoirPy documentation master file
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :hidden:
+   :titlesonly:
+   
+   user_guide/index
+   api_reference/index
+   about/index
 
+.. image:: _static/qreservoirpy_logo_original.jpg
+   :align: center
+   :alt: QReservoirPy Logo
 
+.. raw:: html
+   :file: display.html
 
-Indices and tables
-==================
+|
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+.. grid:: 3
+   :gutter: 0
+
+   .. grid-item-card:: User Guide
+      :link: user_guide/index.html
+      :class-card: frontpage-display-card
+      :shadow: none
+
+   .. grid-item-card:: API Reference
+      :link: api_reference/index.html
+      :class-card: frontpage-display-card
+      :shadow: none
+
+   .. grid-item-card:: About
+      :link: about/index.html
+      :class-card: frontpage-display-card
+      :shadow: none
