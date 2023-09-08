@@ -1,217 +1,81 @@
 # Quantum Reservoir Computing (QRC)
+Using quantum computers as reservoirs in a reservoir computer is fairly new. The current examples in the literature rely heavily on quantum circuits of a very periodic nature. This package is meant to simplify the creation and simulation of such periodic circuits.
+
 ## Installation
-The *qreservoirpy* folder is structured as a python package and must therefore be pip installed. Navigate to the outer qreservoirpy/ folder (the one with setup.py in it) and run
+*qreservoirpy* will soon be uploaded to PyPI, and will then be pip-installable as
+
 ```console
-~/ReservoirComputingExamples/qreservoirpy pip install .
+ pip install qreservoirpy
+```
+
+In the meantime, you can pip install it locally. Clone the repository and navigate to the folder containing `setup.py`. Then run
+
+```console
+pip install .
 ```
 This will install qreservoirpy, as well as the dependent packages (among others qiskit and scikit-learn)
 
 ## Interface
-The interface of this package is heavily inspired by  [reservoirpy](https://github.com/reservoirpy/reservoirpy). Consider checking out their tutorials to better understand this package.
+The interface of this package is somewhat inspired by  [reservoirpy](https://github.com/reservoirpy/reservoirpy). Consider checking out their tutorials to better understand this package.
 
-Using a reservoir is simple enough;
+A *reservoir* is in this package defined as a class implementing the abstract `QReservoir`. To create a *completely custom* reservoir, one needs to implement 5 functions
 ```python
-from qreservoirpy import QReservoir
-res = QReservoir(INIT)
-timeseries = [0, 1, 2, 3]
+class CustomRes(QReservoir):
+    def before(self, circuit):
+        pass
+    def during(self, circuit, timestep):
+        pass
+    def after(self, circuit):
+        pass
+
+    def run(self, timeseries, **kwargs):
+        pass
+    def predict(self, num_pred, model, from_series, **kwargs):
+        pass
+```
+However, `qreservoirpy` has some partially implemented reservoirs already, which have easier interfaces. See the *Examples* folder for inspiration.
+
+## Static and Incremental
+These reservoirs have implemented `run` and `predict`, leaving only `before`, `during` and `after`.
+
+All the reservoirs created with `Static` and `Ìncremental` have the same three layered circuit structure; they begin with an initialization, which is defined by  `before`. Then, a small circuit is created for every timestep in the timeseries, which is defined by `during`. The third and last layer is defined by `after`.
+
+```python
+from qreservoirpy.reservoirs import Static
+class CustomRes(Static):
+    def before(self, circuit):
+        circuit.h(circuit.qubits)
+        circuit.barrier()
+
+    def during(self, circuit, timestep):
+        circuit.initialize(str(timestep), [0])
+        circuit.h(0)
+        circuit.cx(0, 1)
+
+    def after(self, circuit):
+        circuit.barrier()
+        circuit.measure_all()
+
+res = CustomRes(n_qubits=2)
+res.circuit([0, 1]).draw('mpl')
+```
+![Image](ReadmeData/Images/simple_static.jpg)
+
+The barriers give a sense of what the different functions do.
+
+The three functions `before`, `during` and `after` do the same thing both `Static` and `Incremental` reservoirs. The difference between them is what happens when the reservoirs are run.
+
+## Running a reservoir
+Having created a reservoir, one can simply use `reservoir.run`
+
+```python
 states = res.run(timeseries)
 ```
+This will return a `np.ndarray` of the same length as the timeseries, corresponding to the reservoir state at each timestep.
 
-The above code will embed the one-dimensional `timeseries` into a higher dimensional space using a quantum circuit. However, the exact nature of this embedding depends strongly on what you write as `INIT`.
-## Layers
-### Simple
-`QReservoir` has two main arguments: `qubits`, which specify the number of qubits the circuit should use, and `layers`, which is described below. The rest of the arguments are explained later.
+`Static` reservoirs are runned *once* and all measurements are reshaped to a `(len(timeseries), -1)` shape.
 
-Some layers are more intuitive than others. Below, for exdample, are three layers which correspond to some of `qiskit`'s own operations.
-
-```python
-from qreservoirpy import QReservoir, Layers
-res = QReservoir(qubits=4, layers=[
-    Layers.H(),
-    Layers.Measurement(measure_qubits=[0, 1]),
-    Layers.Reset(),
-    Layers.Measurement(measure_qubits=[1, 2])
-])
-res.circuit.draw('mpl')
-```
-![Image](ReadmeData/Images/simple.jpg)
-
-When the `QReservoir` is run or drawn, it creates a `QuantumCircuit` and loops through the *layers* variable, appending to the circuit.
-### Timeseries
-
-By far the most important Layer, is `Layers.Timeseries`. This layer creates a highly customizable periodic circuit used to specify what measurements and/or operations to be done for every timestep. The following example
-```python
-from qreservoirpy import QReservoir, Layers
-def build_method(circuit, timestep):
-    circuit.barrier()
-    circuit.measure(circuit.qubits)
-    return circuit
-
-res = QReservoir(qubits=4, layers=[
-    Layers.H(),
-    Layers.Timeseries(build_method=build_method)
-])
-res.run([0, 1, 2])
-fig = res.circuit.draw('mpl')
-```
-![Image](ReadmeData/Images/simple_timeseries.jpg)
-
-
-#### `build_method`
-The Timeseries Layers takes as an argument `build_methods` which is a function of the format
-```python
-def build_method(circuit, timestep):
-    # Append operation to circuit for each timestep
-    return circuit
-```
-This method specifies what to happen for every timestep, when the reservoir is later run on a timeseries. You must append operations to *circuit* and return the finished circuit at the end.
-
-The *circuit* variable is (almost) a qiskit [QuantumCircuit](https://qiskit.org/documentation/stubs/qiskit.circuit.QuantumCircuit.html) object, and you can expect that all operations given by qiskit to work. The only difference is how one specifies the measurements. `circuit.measure(qbit, clbit)` from qiskit has been replaced by `circuit.measure(qbit)`. This was done for two reasons:
-- To avoid having to create classical registers in `build_method`
--  To remove the necessity of passing the number of measurements already made into `build_method`
-
-Both of these choices made the implementations of `build_method`'s more user-friendly.
-
-The *timestep* variable is a single timestep, and must be of dimension `(1, n)`.
-
-#### Adding parameters to `build_method`
-Consider the case where `build_method` should append a time dependent (i.e. depending on `timestep`) operator to the circuit. To allow for this, one can add extra variables to `build_method`, as long as the same variable is provided as a key-value-pair argument when initializing `Layers.Timeseries`. An example is shown below
-
-```python
-from qreservoirpy import QReservoir, Layers
-from qiskit.quantum_info import random_unitary
-
-def build_method(circuit, timestep, operators, encoder):
-    circuit.unitary(operators[timestep], circuit.qubits)
-    circuit.measure([0, 1])
-    circuit.initialize(encoder[timestep], [0, 1])
-    return circuit
-
-
-timeseries = [0, 1, 2]
-res = QReservoir(qubits=4, layers=[
-    Layers.H(),
-    Layers.Timeseries(build_method=build_method,
-        operators = {key : random_unitary(2**4) for key in timeseries},
-        encoder = {
-            0: '00',
-            1: '01',
-            2: '10',
-            3: '11'
-        })
-])
-res.run(timeseries)
-fig = res.circuit.draw('mpl')
-```
-![Image](ReadmeData/Images/adding_parameters.jpg)
-
-### `Incrementally=True`
-Many features of `qreservoirpy` was implemented to reproduce the work of [[1]](#1). One of them, is the keyword `Incrementally`.
-
-Consider the following code
-```python
-from qreservoirpy import QReservoir, Layers
-from qiskit.quantum_info import random_unitary
-
-def build_method(circuit, timestep, operator):
-    circuit.unitary(operator, circuit.qubits)
-    return circuit
-
-
-timeseries = [0, 1, 2]
-res = QReservoir(qubits=4, layers=[
-    Layers.H(),
-    Layers.Timeseries(
-        build_method=build_method,
-
-        operator = random_unitary(2**4)
-        ),
-    Layers.Measurement(range(4))
-])
-res.run(timeseries, incrementally=True)
-fig = res.circuit.draw('mpl')
-```
-![Image](ReadmeData/Images/incrementally.jpg)
-
-It looks like this only did four measurements. However, `incrementally=True` means that the `Timeseries` Layer was incrementally added, meaning that the above code actually ran 3 simulations:
-- First with `timeseries=[0]`
-- Second with `timeseries=[0, 1]`
-- Third with `timeseries=[0, 1, 2]`
-
-The `circuit.draw` is therefore misleading in this case: the code does not use the same circuit, but creates a new one for each timestep.
-
-To add non-linearities, one could be tempted to make measurements in the timeseries like below
-![Image](ReadmeData/Images/nonlinear_incrementally.jpg)
-One needs to be careful, however, when doing this with `incrementally=True`. By default, when the 'incremental' experiments are run, it appends *all* measurements to the state variable - including the 'nonlinearity-ensuring' ones. To have complete control over which measurements that should be used as state variables, give the `QReservoir` an `analyze_function`, like in the code below.
-```python
-from qreservoirpy import QReservoir, Layers
-from qiskit.quantum_info import random_unitary
-
-def analyze_fcn(sim_result):
-    return sim_result[-4:]
-
-def build_method(circuit, timestep, operator):
-    circuit.measure(0)
-    circuit.unitary(operator, circuit.qubits)
-    return circuit
-
-
-timeseries = [0, 1, 2]
-res = QReservoir(qubits=4, layers=[
-    Layers.H(),
-    Layers.Timeseries(
-        build_method=build_method,
-        operator = random_unitary(2**4),
-        ),
-    Layers.Measurement(range(4))
-], analyze_function=analyze_fcn)
-res.run(timeseries, incrementally=True)
-fig = res.circuit.draw('mpl')
-```
-
-`analyze_fcn` will ensure that only the last four measurements (the ones from the measurement layer) are kept as state variables. The above code was used to create the last timeseries.
-
-### `M`
-When `Incrementally=True`, one could want to only make a subset of the circuit, rather than using the entire timeseries every experiment. The `M` argument does exactly this. If `Incrementally=True` and `M = 4`, a call to `res.run([0, 1, 2, 3, 4, 5])` would result in the following 'incremental' experiments:
-
-- `timeseries=[0]`
-- `timeseries=[0, 1]`
-- `timeseries=[0, 1, 2]`
-- `timeseries=[0, 1, 2, 3]`
-- `timeseries=[1, 2, 3, 4]`
-- `timeseries=[2, 3, 4, 5]`
-
-Where only the last `M` timesteps are used at a time.
-
-By default, `M=np.inf`.
-## Prediction
-## Custom layers
-There are, of course, circuits that are impossible to create using the already existing framework. If one needs a new layer altogether, you can easily create one.
-
-In the qreservoirpy/Layers.py file, there is an absract base-class of the form
-
-```python
-class Layer(ABC):
-
-    # When this function is called on a layer,
-    # it should return an integer overestimating the number
-    # of measurements the layer is going to perform.
-    @abstractmethod
-    def get_num_measurements(self, qreg, timeseries):
-        return 0
-
-    # Main build method for layer. Append operations to the
-    # end of the circuit, and return the finished circuit.
-    # **kwargs correspond directly to key-word-arguments provided
-    # when initializing the reservoir, and are available for use.
-    @abstractmethod
-    def build(self, circuit, timeseries, **kwargs):
-        return circuit
-```
-
-Create your custom layer in the Layers.py file by subclassing `Layer`. Feel free to draw inspiration from the other layers in the file.
-
-
+`Incremental` reservoirs are runned *incrementally*. For every state, only the last `M` steps of the timeseries is built at a time (`M` being a parameter of `Incremental.__init__`). See the examples folder for examples.
 
 ## References
 <a id="1">[1]</a>

@@ -78,7 +78,3 @@ class QReservoir(BaseReservoir):
 
         return circ
 
-
-
-
-
