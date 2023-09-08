@@ -12,9 +12,38 @@ html[data-theme="dark"] {
     --pst-color-primary: #ffffff,
 }
 
-.frontpage-display-card {
+h2 {
+    text-decoration: underline;
+}
+
+.bd-sidebar-secondary {
+    min-width: 25vw;
+}
+
+.bd-footer {
+    line-height: 0.6rem;
+}
+
+.copyright {
+    font-size: 0.8rem;
+}
+
+/* This is necessary to be more selective than the styles added by the sphinx-design package */
+.frontpage-display-card:not(:hover), .frontpage-display-card:hover {
     text-align: center;
     border: none;
-    border-bottom-width: 0;
     border-radius: 0;
+    line-height: inherit;
+    background-color: #003c65;
+}
+
+.sd-card-title, .sd-card-text {
+    margin-top: 2em;
+    margin-bottom: 3em;
+    color: #ffffff;
+}
+
+.sd-card-text {
+    font-size: 1.2rem;
+    font-weight: 600;
 }
