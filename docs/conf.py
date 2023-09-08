@@ -51,7 +51,8 @@ html_theme_options = {
     "article_header_start": [],
     "article_footer_items": [],
     "footer_start": ["copyright"],
-    "footer_end": []
+    "footer_end": [],
+    "show_toc_level": 3
 }
 
 html_show_sourcelink = False

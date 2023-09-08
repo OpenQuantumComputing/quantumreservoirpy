@@ -19,19 +19,25 @@
 |
 
 .. grid:: 3
-   :gutter: 0
+   :gutter: 2
 
-   .. grid-item-card:: User Guide
+   .. grid-item-card:: :octicon:`book;5em`
       :link: user_guide/index.html
       :class-card: frontpage-display-card
       :shadow: none
 
-   .. grid-item-card:: API Reference
+      User Guide
+
+   .. grid-item-card:: :octicon:`code-square;5em`
       :link: api_reference/index.html
       :class-card: frontpage-display-card
       :shadow: none
 
-   .. grid-item-card:: About
+      API Reference
+
+   .. grid-item-card:: :octicon:`info;5em`
       :link: about/index.html
       :class-card: frontpage-display-card
       :shadow: none
+
+      About
