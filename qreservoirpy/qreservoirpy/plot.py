@@ -23,3 +23,11 @@ def state_plotter(x, target):
             ax.set_title(f'Feature {idx+1}')
             ax.legend(loc='upper right')
     return fig, axes
+
+def feature_plotter(x, target):
+    fig, ax = plt.subplots()
+    cmap = plt.get_cmap('jet', len(np.unique(target)))
+    ax.scatter(x[:, 0], x[:, 1], cmap=cmap, c=target)
+    ax.set_xlabel("state 1")
+    ax.set_ylabel("state 2")
+    return fig, ax

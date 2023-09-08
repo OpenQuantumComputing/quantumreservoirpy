@@ -4,8 +4,10 @@ import numpy as np
 from .reservoircircuit import ReservoirCircuit, CountingCircuit
 
 from abc import ABC, abstractmethod
+import qiskit as qs
 from qiskit import Aer
 from qiskit.providers import Backend
+
 
 class BaseReservoir(ABC):
     """
@@ -48,13 +50,15 @@ class QReservoir(BaseReservoir):
         pass
 
 
-    def circuit(self, timeseries, merge_registers=False):
+    def circuit(self, timeseries, merge_registers=False, transpile=True):
         circ = ReservoirCircuit(self.n_qubits)
         circ = self.__build(circ, timeseries)
 
         if merge_registers:
             temp_circ = CountingCircuit(self.n_qubits, circ.num_clbits)
             circ = self.__build(temp_circ, timeseries)
+        if transpile:
+            circ = qs.transpile(circ, self.backend)
         return circ
 
 
