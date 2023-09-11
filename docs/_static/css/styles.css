@@ -1,3 +1,7 @@
+/*
+    Overall Theme Modifications
+*/
+
 html {
     --pst-font-size-base: 1.1rem;
     --pst-font-family-base-system: Lato, -apple-system, BlinkMacSystemFont, Segoe UI, "Helvetica Neue", Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol;
@@ -12,9 +16,26 @@ html[data-theme="dark"] {
     --pst-color-primary: #ffffff,
 }
 
+/*
+    Element-Specific Changes
+*/
+
 h2 {
     text-decoration: underline;
 }
+
+tbody {
+    font-size: 0.9rem;
+}
+
+/* We only use tables in API Reference for now. The first column is the method name. */
+td:first-child {
+    font-family: var(--pst-font-family-monospace-system);
+}
+
+/*
+    Component Style Modifications
+*/
 
 .bd-sidebar-secondary {
     min-width: 25vw;
@@ -27,6 +48,10 @@ h2 {
 .copyright {
     font-size: 0.8rem;
 }
+
+/*
+    Extension Style Modifications
+*/
 
 /* This is necessary to be more selective than the styles added by the sphinx-design package */
 .frontpage-display-card:not(:hover), .frontpage-display-card:hover {
