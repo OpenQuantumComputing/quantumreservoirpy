@@ -117,7 +117,7 @@ All the reservoirs created with ``Static`` and ``Ìncremental`` have the same th
 
 .. TODO: Add the same image in README.md
 
-The three methods ``before``, ``during``, and ``after`` do the same thing both ``Static`` and ``Ìncremental`` reservoirs. The difference between them is what happens when the reservoirs are run.
+The three methods ``before``, ``during``, and ``after`` do the same thing for both ``Static`` and ``Ìncremental`` reservoirs. The difference between them is what happens when the reservoirs are run.
 
 Running a Reservoir
 -------------------
@@ -133,9 +133,40 @@ This will return a ``np.ndarray`` of the same length as the timeseries, correspo
 
 ``Static`` reservoirs run once and all measurements are reshaped to a ``(len(timeseries), -1)`` shape.
 
-``Incremental`` reservoirs run incrementally. For every state, only the last ``M`` steps of the timeseries is built at a time (``M`` being a parameter of ``Incremental.__init__``). See the |ref_examples| for examples.
+``Incremental`` reservoirs run incrementally. For every state, only the last ``M`` steps of the timeseries is built at a time (``M`` being a parameter of ``Incremental.__init__``).
 
-.. |ref_examples| raw:: html
+Examples
+========
 
-   <a href="https://github.com/OpenQuantumComputing/quantumreservoirpy/tree/main/Examples" target="_blank">examples directory</a>
+There are several examples available in the GitHub repository.
+
+* |ref_qubit|
+* |ref_qubit_longer|
+* |ref_clifford|
+* |ref_random_unitary|
+* |ref_twinkle|
+
+.. |ref_qubit| raw:: html
+
+   <a href="https://github.com/OpenQuantumComputing/quantumreservoirpy/blob/main/examples/static/1Qbit.ipynb" target="_blank">1 Qubit (Static)</a>
+
+
+.. |ref_qubit_longer| raw:: html
+
+   <a href="https://github.com/OpenQuantumComputing/quantumreservoirpy/blob/main/examples/static/1Qbit_longer_sequence.ipynb" target="_blank">1 Qubit, Longer Sequence (Static)</a>
+
+
+.. |ref_clifford| raw:: html
+
+   <a href="https://github.com/OpenQuantumComputing/quantumreservoirpy/blob/main/examples/static/clifford.ipynb" target="_blank">Clifford (Static)</a>
+
+
+.. |ref_random_unitary| raw:: html
+
+   <a href="https://github.com/OpenQuantumComputing/quantumreservoirpy/blob/main/examples/incremental/randomunitary.ipynb" target="_blank">Random Unitary (Incremental)</a>
+
+
+.. |ref_twinkle| raw:: html
+
+   <a href="https://github.com/OpenQuantumComputing/quantumreservoirpy/blob/main/examples/music/twinkle.ipynb" target="_blank">Twinkle (Incremental)</a>
 
