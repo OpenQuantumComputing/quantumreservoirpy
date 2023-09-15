@@ -25,7 +25,12 @@ class Static(QReservoir):
     def predict(self, num_pred, model, from_series, **kwargs):
         M = min(num_pred + len(from_series), self.memory)
 
-        predictions = np.zeros(num_pred + len(from_series))
+        predictions = np.zeros(num_pred + len(from_series), dtype=np.array(from_series).dtype)
+
+        if np.ndim(from_series) == 2:
+            prediction_dimension = np.shape(from_series)[1]
+            predictions = np.zeros((num_pred + len(from_series), prediction_dimension), dtype=np.array(from_series).dtype)
+
         predictions[:len(from_series)] = from_series
 
         for i in tqdm(range(num_pred), desc="Predicting..."):
