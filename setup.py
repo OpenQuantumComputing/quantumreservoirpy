@@ -10,7 +10,7 @@ INSTALL_REQUIRES = [
     "ipykernel"
 ]
 
-setup(name='qreservoirpy',
-      version='0.2',
-      packages=['qreservoirpy'],
+setup(name='quantumreservoirpy',
+      version='0.1',
+      packages=['quantumreservoirpy'],
       install_requires=INSTALL_REQUIRES)
