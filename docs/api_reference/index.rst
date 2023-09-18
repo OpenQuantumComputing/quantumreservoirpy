@@ -7,14 +7,14 @@ API Reference
 Reservoirs
 ==========
 
-qreservoirpy.reservoirs.QReservoir
-----------------------------------
+quantumreservoirpy.reservoirs.QReservoir
+----------------------------------------
 
 *Abstract Class*
 
 .. code-block:: python
 
-    qreservoirpy.reservoirs.QReservoir(n_qubits,  memory=np.inf, backend=None)
+    quantumreservoirpy.reservoirs.QReservoir(n_qubits,  memory=np.inf, backend=None)
     
 
 Reservoir that allows for full customization of all methods.
@@ -30,14 +30,14 @@ Reservoir that allows for full customization of all methods.
    =======================================================  ==============================================================
 
 
-qreservoirpy.reservoirs.Static
-------------------------------
+quantumreservoirpy.reservoirs.Static
+------------------------------------
 
 *Class*
 
 .. code-block:: python
 
-   qreservoirpy.reservoir.Static(n_qubits,  memory=np.inf, backend=None)
+   quantumreservoirpy.reservoir.Static(n_qubits,  memory=np.inf, backend=None)
 
 
 Reservoir which runs once on the timeseries. All measurements are reshaped to ``(len(timeseries), -1)``.
@@ -45,20 +45,20 @@ Reservoir which runs once on the timeseries. All measurements are reshaped to ``
    =======================================================  ==============================================================
    Implementable Methods
    =======================================================  ==============================================================
-   before(self, circuit)                                    See :ref:`qreservoirpy.reservoirs.QReservoir`.
-   during(self, circuit, timestep)                          See :ref:`qreservoirpy.reservoirs.QReservoir`.
-   after(self, circuit)                                     See :ref:`qreservoirpy.reservoirs.QReservoir`.
+   before(self, circuit)                                    See :ref:`quantumreservoirpy.reservoirs.QReservoir`.
+   during(self, circuit, timestep)                          See :ref:`quantumreservoirpy.reservoirs.QReservoir`.
+   after(self, circuit)                                     See :ref:`quantumreservoirpy.reservoirs.QReservoir`.
    =======================================================  ==============================================================
 
 
-qreservoirpy.reservoirs.Incremental
------------------------------------
+quantumreservoirpy.reservoirs.Incremental
+-----------------------------------------
 
 *Class*
 
 .. code-block:: python
 
-   qreservoirpy.reservoir.Incremental(n_qubits, memory=np.inf, backend=None, num_features=-1)
+   quantumreservoirpy.reservoir.Incremental(n_qubits, memory=np.inf, backend=None, num_features=-1)
 
 
 Reservoir which runs incrementally on the timeseries, where only the last ``M`` steps of the timeseries is built for every state.
@@ -66,34 +66,34 @@ Reservoir which runs incrementally on the timeseries, where only the last ``M`` 
    =======================================================  ==============================================================
    Implementable Methods
    =======================================================  ==============================================================
-   before(self, circuit)                                    See :ref:`qreservoirpy.reservoirs.QReservoir`.
-   during(self, circuit, timestep)                          See :ref:`qreservoirpy.reservoirs.QReservoir`.
-   after(self, circuit)                                     See :ref:`qreservoirpy.reservoirs.QReservoir`.
+   before(self, circuit)                                    See :ref:`quantumreservoirpy.reservoirs.QReservoir`.
+   during(self, circuit, timestep)                          See :ref:`quantumreservoirpy.reservoirs.QReservoir`.
+   after(self, circuit)                                     See :ref:`quantumreservoirpy.reservoirs.QReservoir`.
    =======================================================  ==============================================================
 
 
 Plotting
 ========
 
-qreservoirpy.plot.state_plotter
--------------------------------
+quantumreservoirpy.plot.state_plotter
+-------------------------------------
 
 *Function*
 
 .. code-block:: python
 
-   qreservoirpy.plot.state_plotter(x, target)
+   quantumreservoirpy.plot.state_plotter(x, target)
 
 
 Music
 =====
 
-qreservoirpy.music.gen_audio
-----------------------------
+quantumreservoirpy.music.gen_audio
+----------------------------------
 
 *Function*
 
 .. code-block:: python
 
-   qreservoirpy.music.gen_audio(noter, filename="output.wav", BPM=144)
+   quantumreservoirpy.music.gen_audio(noter, filename="output.wav", BPM=144)
 

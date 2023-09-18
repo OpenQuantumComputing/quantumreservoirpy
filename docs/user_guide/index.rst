@@ -9,16 +9,14 @@ Installation
 
 QuantumReservoirPy is available as a pip-installable package on |ref_pypi|.
 
-.. TODO: The link below should be updated to the actual package page on PyPI once it is published.
-
 .. |ref_pypi| raw:: html
 
-   <a href="https://pypi.org/" target="_blank">PyPI</a>
+   <a href="https://pypi.org/project/quantumreservoirpy/" target="_blank">PyPI</a>
 
 
 .. code-block:: console
 
-   pip install qreservoirpy
+   pip install quantumreservoirpy
 
 
 This will install QuantumReservoirPy along with its dependent packages.
@@ -33,11 +31,11 @@ Alternatively, you may clone the repository from GitHub
    git clone https://github.com/OpenQuantumComputing/quantumreservoirpy.git
 
 
-navigate to the ``qreservoirpy`` directory
+navigate to the repository
 
 .. code-block:: console
 
-   cd quantumreservoirpy/qreservoirpy
+   cd quantumreservoirpy
 
 
 and install it from here.
@@ -95,7 +93,7 @@ All the reservoirs created with ``Static`` and ``Ìncremental`` have the same th
 
 .. code-block:: python
 
-   from qreservoirpy.reservoirs import Static
+   from quantumreservoirpy.reservoirs import Static
    
    class CustomRes(Static):
       def before(self, circuit):
@@ -115,7 +113,8 @@ All the reservoirs created with ``Static`` and ``Ìncremental`` have the same th
    res.circuit([0, 1]).draw('mpl')
 
 
-.. TODO: Add the same image in README.md
+.. image:: /_static/circuit_simple_static.jpg
+   :alt: Diagram of Simple Quantum Circuit
 
 The three methods ``before``, ``during``, and ``after`` do the same thing for both ``Static`` and ``Ìncremental`` reservoirs. The difference between them is what happens when the reservoirs are run.
 
