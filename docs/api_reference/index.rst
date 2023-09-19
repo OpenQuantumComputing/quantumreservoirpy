@@ -75,6 +75,19 @@ Reservoir which runs incrementally on the timeseries, where only the last ``M`` 
 Plotting
 ========
 
+quantumreservoirpy.plot.feature_plotter
+---------------------------------------
+
+*Function*
+
+.. code-block:: python
+
+   quantumreservoirpy.plot.feature_plotter(x, target)
+
+
+Plots two reservoir features in a single scatterplot. Defaults to the first two features of ``x``.
+
+
 quantumreservoirpy.plot.state_plotter
 -------------------------------------
 
@@ -83,6 +96,9 @@ quantumreservoirpy.plot.state_plotter
 .. code-block:: python
 
    quantumreservoirpy.plot.state_plotter(x, target)
+
+
+Plots each reservoir feature in individual side-by-side scatterplots.
 
 
 Music
