@@ -5,7 +5,7 @@ INSTALL_REQUIRES = [
     "pylatexenc>=2.0",
     "qiskit>=0.43.1",
     "qiskit-aer>=0.12.0",
-    "numpy>=1.23.5",
+    "numpy>=1.21.6",
     "scikit-learn",
     "ipykernel"
 ]
