@@ -1,4 +1,4 @@
-# Quantum Reservoir Computing (QRC)
+# QuantumReservoirPy
 
 Using quantum circuits as reservoirs in reservoir computing is fairly new. The current examples in the literature rely heavily on quantum circuits of a very periodic nature. This package is meant to simplify the creation and simulation of such periodic circuits.
 
@@ -8,7 +8,7 @@ Using quantum circuits as reservoirs in reservoir computing is fairly new. The c
 QuantumReservoirPy is available as a pip-installable package on [PyPI](https://pypi.org/project/quantumreservoirpy/).
 
 ```console
-    pip install quantumreservoirpy
+pip install quantumreservoirpy
 ```
 
 This will install QuantumReservoirPy along with its dependent packages.
@@ -60,7 +60,7 @@ QuantumReservoirPy has some partially implemented reservoirs already, which have
 
 ## Static and Incremental
 
-These reservoirs have implemented the `run` and `predict` methods, so you only need to implement `before`, `during` and `after`.
+These reservoirs have implemented the `run` and `predict` methods, so you only need to implement `before`, `during`, and `after`.
 
 All the reservoirs created with `Static` and `Ìncremental` have the same three layered circuit structure; they begin with an initialization, which is defined by `before`. Then, a small circuit is created for every timestep in the timeseries, which is defined by `during`. The third and last layer is defined by `after`.
 
@@ -83,11 +83,11 @@ class CustomRes(Static):
 res = CustomRes(n_qubits=2)
 res.circuit([0, 1]).draw('mpl')
 ```
-![Image](ReadmeData/Images/simple_static.jpg)
+![Image](docs/_static/circuit_simple_static.jpg)
 
-The three functions `before`, `during` and `after` do the same thing for both `Static` and `Incremental` reservoirs. The difference between them is what happens when the reservoirs are run.
+The three functions `before`, `during`, and `after` do the same thing for both `Static` and `Incremental` reservoirs. The difference between them is what happens when the reservoirs are run.
 
-## Running a reservoir
+## Running a Reservoir
 
 Having created a reservoir, you can simply call `reservoir.run`.
 
@@ -100,3 +100,13 @@ This will return a `np.ndarray` of the same length as the timeseries, correspond
 `Static` reservoirs run once and all measurements are reshaped to a `(len(timeseries), -1)` shape.
 
 `Incremental` reservoirs run incrementally. For every state, only the last `M` steps of the timeseries is built at a time (`M` being a parameter of `Incremental.__init__`).
+
+## About
+
+You can find out more about QuantumReservoirPy and contact the authors [here](https://quantumreservoirpy.readthedocs.io/en/latest/about/).
+
+This project is supported by [SINTEF Digital](https://www.sintef.no/en/digital/).
+
+<img src="docs/_static/sintef_logo.png" alt="SINTEF Logo" width="200"/>
+
+*Teknologi for et bedre samfunn*
