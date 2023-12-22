@@ -1,5 +1,6 @@
 import numpy as np
 
+from qiskit.primitives import BackendSampler
 from tqdm import tqdm
 
 from .reservoirbase import QReservoir
@@ -9,11 +10,18 @@ from .util import memory_to_mean
 class Static(QReservoir):
     def run(self, timeseries, **kwargs):
         transpile = kwargs.pop('transpile', True)
-        circ = self.circuit(timeseries, merge_registers=False, transpile=transpile).reverse_bits()
+        circ = self.circuit(timeseries, merge_registers=True, transpile=transpile).reverse_bits()
 
-        self._job = self.backend.run(circ, memory=True, **kwargs)
-        mem = self._job.result().get_memory()
-        avg = memory_to_mean(mem)
+        sampler = BackendSampler(self.backend)
+        self._job = sampler.run(circ, memory=True, **kwargs)
+        memory = self._job.result().quasi_dists[0].items()
+
+        raw_shots = [list(bin(result)[2:].zfill(circ.num_clbits)) for result, _ in memory]
+        weights = [frequency for _, frequency in memory]
+
+        shots = np.array(raw_shots, dtype=int)
+
+        avg = np.average(shots, axis=0, weights=weights)
 
         states = avg.reshape((len(timeseries), -1))
 
