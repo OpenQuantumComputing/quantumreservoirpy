@@ -1,5 +1,6 @@
 import numpy as np
 
+from itertools import combinations
 from tqdm import tqdm
 
 from .reservoirbase import QReservoir
@@ -7,22 +8,45 @@ from .util import memory_to_mean
 
 
 class Static(QReservoir):
+
     def run(self, timeseries, **kwargs):
         transpile = kwargs.pop('transpile', True)
-        circ = self.circuit(timeseries, merge_registers=False, transpile=transpile).reverse_bits()
+        tqdm_disable= kwargs.pop('tqdm', False)
+        self.circuits={}
 
-        self._job = self.backend.run(circ, memory=True, **kwargs)
-        mem = self._job.result().get_memory()
-        avg = memory_to_mean(mem)
+        for nr in tqdm(range(1, self.num_reservois+1), desc="Running reservoirs", disable=tqdm_disable):
+            self.circuits[nr] = self.circuit(timeseries, merge_registers=False, transpile=transpile, reservoir_number=nr).reverse_bits()
+            
 
-        states = avg.reshape((len(timeseries), -1))
+            self._job = self.backend.run(self.circuits[nr], **kwargs)
+            counts = self._job.result().get_counts()
 
-        self.last_state = states[-1].ravel()
+            num_timesteps = len(timeseries)
+
+            num_measq_pt=int(len(list(counts.keys())[0])/num_timesteps)
+
+            states_list_this=[]
+            for t in range(num_timesteps):
+                states_t=[]
+                indices=range(num_measq_pt)
+                for k in range(1,self.degree+1):
+                    for O in list(combinations(indices,k)):
+                        states_t.append(self.__getE(O, counts, t))
+                states_list_this.append(np.array(states_t))
+            if nr==1:
+                states = np.stack(states_list_this, axis=0)
+            else:
+                states = np.hstack((states, np.stack(states_list_this, axis=0)))
+
+        #num_observables_per_timestep=int(len(states)/num_timesteps)
+        #self.last_state = states[-1].ravel()
 
         return states
 
 
     def predict(self, num_pred, model, from_series, **kwargs):
+        kwargs['tqdm'] = True
+        kwargs['tqdm'] = True
         M = min(num_pred + len(from_series), self.memory)
 
         predictions = np.zeros(num_pred + len(from_series), dtype=np.array(from_series).dtype)
@@ -32,16 +56,34 @@ class Static(QReservoir):
             predictions = np.zeros((num_pred + len(from_series), prediction_dimension), dtype=np.array(from_series).dtype)
 
         predictions[:len(from_series)] = from_series
+        #print("predictions", predictions)
 
         for i in tqdm(range(num_pred), desc="Predicting..."):
             curidx = len(from_series) + i
-            states = self.run(predictions[:curidx][-M:],  kwargs=kwargs)
+            #print("running reservoir with (", i, ")", predictions[:curidx][-M:])
+            states = self.run(predictions[:curidx][-M:],  **kwargs)
 
+            #pred_state = states[-1*len(from_series):]#.reshape((len(from_series), -1))[
             pred_state = states[-1].reshape((1, -1))
+            #print("i am here, you you!", pred_state)
             predictions[curidx] = model.predict(pred_state)
-            self.last_state = pred_state.ravel()
+            #print("predictions(", i, ")", predictions)
+            #self.last_state = pred_state.ravel()
 
-        return predictions[-num_pred:]
+        return predictions#[-num_pred:]
+
+    def __getE(self, Obs, counts, t):
+        E=0
+        totalcounts=0
+        for key in counts:
+            val=1
+            totalcounts+=counts[key]
+            key_t = key.split()[t]
+            #val = (-1)**(key_t[Obs].count("1"))
+            for ind_O in Obs:
+                val*=(1.-2*int(key_t[ind_O]))
+            E+=val*counts[key]
+        return E/totalcounts
 
 class Incremental(QReservoir):
     def __init__(self, n_qubits, memory=np.inf, backend=None, num_features=-1) -> None:
@@ -53,13 +95,13 @@ class Incremental(QReservoir):
     def run(self, timeseries, **kwargs):
         transpile = kwargs.pop('transpile', True)
         M = min(len(timeseries), self.memory)
-        timeseries_splited = [timeseries[:i+1][-M:] for i in range(len(timeseries))]
+        timeseries_splitted = [timeseries[:i+1][-M:] for i in range(len(timeseries))]
 
-        total = len(timeseries_splited)
+        total = len(timeseries_splitted)
 
         with tqdm(total=total) as pbar:
             pbar.set_description("Creating circuits...")
-            circuits = [self.circuit(series, merge_registers=False, transpile=transpile).reverse_bits() for series in timeseries_splited]
+            circuits = [self.circuit(series, merge_registers=False, transpile=transpile).reverse_bits() for series in timeseries_splitted]
 
             pbar.set_description("Running job...")
             self._job = self.backend.run(circuits, memory=True, **kwargs)
@@ -69,11 +111,11 @@ class Incremental(QReservoir):
             if not hasattr(self, 'num_features'):
                 self.num_features = memory_to_mean(result.get_memory(0)).size
 
-            states = np.zeros((len(timeseries_splited), self.num_features))
+            states = np.zeros((len(timeseries_splitted), self.num_features))
 
 
             pbar.set_description("Analyzing... ")
-            for idx, _ in enumerate(timeseries_splited):
+            for idx, _ in enumerate(timeseries_splitted):
                 memory = self._job.result().get_memory(idx)
 
                 avg = memory_to_mean(memory)[-self.num_features:]

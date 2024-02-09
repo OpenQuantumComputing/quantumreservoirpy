@@ -13,6 +13,7 @@ class BaseReservoir(ABC):
     """
     Interface for custom reservoirs. Please note that one should NOT
     inherit from this class directly, but rather through one of the
+
     subclasses in reservoir.py.
     """
 
@@ -20,7 +21,7 @@ class BaseReservoir(ABC):
         pass
 
     # What to do every timestep
-    def during(self, circuit, timestep):
+    def during(self, circuit, timestep, reservoir_number):
         pass
 
     # What should happen after the timeseries
@@ -29,7 +30,7 @@ class BaseReservoir(ABC):
 
 
 class QReservoir(BaseReservoir):
-    def __init__(self, n_qubits,  memory=np.inf, backend=None) -> None:
+    def __init__(self, n_qubits,  memory=np.inf, backend=None, degree=1, num_reservois=1) -> None:
         try:
             if not issubclass(type(backend), Backend):
                 raise TypeError()
@@ -40,6 +41,8 @@ class QReservoir(BaseReservoir):
 
         self.n_qubits = n_qubits
         self.memory = memory
+        self.degree = degree
+        self.num_reservois = num_reservois
 
     @abstractmethod
     def run(self, timeseries, **kwargs):
@@ -50,13 +53,13 @@ class QReservoir(BaseReservoir):
         pass
 
 
-    def circuit(self, timeseries, merge_registers=False, transpile=True):
+    def circuit(self, timeseries, merge_registers=False, transpile=True, reservoir_number=1):
         circ = ReservoirCircuit(self.n_qubits)
-        circ = self.__build(circ, timeseries)
+        circ = self.__build(circ, timeseries, reservoir_number)
 
         if merge_registers:
             temp_circ = CountingCircuit(self.n_qubits, circ.num_clbits)
-            circ = self.__build(temp_circ, timeseries)
+            circ = self.__build(temp_circ, timeseries, reservoir_number)
         if transpile:
             circ = qs.transpile(circ, self.backend)
         return circ
@@ -70,10 +73,10 @@ class QReservoir(BaseReservoir):
             raise AttributeError(str(e) +  ". Try runnning the reservoir first")
 
 
-    def __build(self, circ, timeseries):
+    def __build(self, circ, timeseries, reservoirnumber):
         self.before(circ)
         for t in timeseries:
-            self.during(circ, t)
+            self.during(circ, t, reservoirnumber)
         self.after(circ)
 
         return circ
