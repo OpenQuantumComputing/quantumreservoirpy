@@ -9,10 +9,13 @@ class InterfaceCircuit(QuantumCircuit):
         return self.measure(self.qubits)
 
 class ReservoirCircuit(InterfaceCircuit):
-    def measure(self, qubit):
-        cr = ClassicalRegister(len(listify(qubit)))
-        self.add_register(cr)
-        return super().measure(qubit, cr)
+    def measure(self, qubit, clbit=None):
+        if clbit:
+            return super().measure(qubit, clbit)
+        else:
+            cr = ClassicalRegister(len(listify(qubit)))
+            self.add_register(cr)
+            return super().measure(qubit, cr)
 
 
 class CountingCircuit(InterfaceCircuit):

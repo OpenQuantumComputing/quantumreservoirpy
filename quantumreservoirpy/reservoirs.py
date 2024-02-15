@@ -5,6 +5,7 @@ from tqdm import tqdm
 
 from .reservoirbase import QReservoir
 from .util import memory_to_mean
+from .statistic import Statistic
 
 
 class Static(QReservoir):
@@ -12,13 +13,22 @@ class Static(QReservoir):
     def run(self, timeseries, **kwargs):
         transpile = kwargs.pop('transpile', True)
         tqdm_disable= kwargs.pop('tqdm', False)
-        self.circuits={}
+        #self.circuits={}
 
         for nr in tqdm(range(1, self.num_reservois+1), desc="Running reservoirs", disable=tqdm_disable):
-            self.circuits[nr] = self.circuit(timeseries, merge_registers=False, transpile=transpile, reservoir_number=nr).reverse_bits()
+            #self.circuits[nr] = self.circuit(timeseries, merge_registers=False, transpile=transpile, reservoir_number=nr).reverse_bits()
+            circ = self.circuit(timeseries, merge_registers=False, transpile=transpile, reservoir_number=nr).reverse_bits()
             
+            self._job = self.backend.run(circ, **kwargs)
+            #self._job = self.backend.run(self.circuits[nr], **kwargs)
+            #self._job = self.backend.run(self.circuits[nr], memory=True, **kwargs)
+            #mem = self._job.result().get_memory()
+            #states=memory_to_mean(mem)
+            #print(states)
 
-            self._job = self.backend.run(self.circuits[nr], **kwargs)
+            #return np.stack([list(states)], axis=0)
+
+            #self._job = self.backend.run(self.circuits[nr], **kwargs)
             counts = self._job.result().get_counts()
 
             num_timesteps = len(timeseries)
@@ -37,6 +47,7 @@ class Static(QReservoir):
                 states = np.stack(states_list_this, axis=0)
             else:
                 states = np.hstack((states, np.stack(states_list_this, axis=0)))
+            print("states(",nr,")=", states_list_this)
 
         #num_observables_per_timestep=int(len(states)/num_timesteps)
         #self.last_state = states[-1].ravel()
@@ -45,7 +56,6 @@ class Static(QReservoir):
 
 
     def predict(self, num_pred, model, from_series, **kwargs):
-        kwargs['tqdm'] = True
         kwargs['tqdm'] = True
         M = min(num_pred + len(from_series), self.memory)
 
@@ -70,10 +80,12 @@ class Static(QReservoir):
             #print("predictions(", i, ")", predictions)
             #self.last_state = pred_state.ravel()
 
-        return predictions#[-num_pred:]
+        return predictions, pred_state#[-num_pred:]
 
     def __getE(self, Obs, counts, t):
-        E=0
+        stat = Statistic()
+        stat.reset()
+        #E=0
         totalcounts=0
         for key in counts:
             val=1
@@ -82,8 +94,9 @@ class Static(QReservoir):
             #val = (-1)**(key_t[Obs].count("1"))
             for ind_O in Obs:
                 val*=(1.-2*int(key_t[ind_O]))
-            E+=val*counts[key]
-        return E/totalcounts
+            stat.add_sample(val, counts[key])
+            #E+=val*counts[key]
+        return stat.get_E()#/totalcounts
 
 class Incremental(QReservoir):
     def __init__(self, n_qubits, memory=np.inf, backend=None, num_features=-1) -> None:
