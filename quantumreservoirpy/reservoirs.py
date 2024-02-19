@@ -47,7 +47,7 @@ class Static(QReservoir):
                 states = np.stack(states_list_this, axis=0)
             else:
                 states = np.hstack((states, np.stack(states_list_this, axis=0)))
-            print("states(",nr,")=", states_list_this)
+            #print("states(",nr,")=", states_list_this)
 
         #num_observables_per_timestep=int(len(states)/num_timesteps)
         #self.last_state = states[-1].ravel()
