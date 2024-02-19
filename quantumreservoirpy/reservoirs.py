@@ -1,4 +1,5 @@
 import numpy as np
+#from multiprocessing import Pool # could be used for parallel execution of reservoirs in multiplexing approach
 
 from itertools import combinations
 from tqdm import tqdm
@@ -13,22 +14,11 @@ class Static(QReservoir):
     def run(self, timeseries, **kwargs):
         transpile = kwargs.pop('transpile', True)
         tqdm_disable= kwargs.pop('tqdm', False)
-        #self.circuits={}
 
         for nr in tqdm(range(1, self.num_reservois+1), desc="Running reservoirs", disable=tqdm_disable):
-            #self.circuits[nr] = self.circuit(timeseries, merge_registers=False, transpile=transpile, reservoir_number=nr).reverse_bits()
             circ = self.circuit(timeseries, merge_registers=False, transpile=transpile, reservoir_number=nr).reverse_bits()
             
             self._job = self.backend.run(circ, **kwargs)
-            #self._job = self.backend.run(self.circuits[nr], **kwargs)
-            #self._job = self.backend.run(self.circuits[nr], memory=True, **kwargs)
-            #mem = self._job.result().get_memory()
-            #states=memory_to_mean(mem)
-            #print(states)
-
-            #return np.stack([list(states)], axis=0)
-
-            #self._job = self.backend.run(self.circuits[nr], **kwargs)
             counts = self._job.result().get_counts()
 
             num_timesteps = len(timeseries)
@@ -47,10 +37,8 @@ class Static(QReservoir):
                 states = np.stack(states_list_this, axis=0)
             else:
                 states = np.hstack((states, np.stack(states_list_this, axis=0)))
-            #print("states(",nr,")=", states_list_this)
 
-        #num_observables_per_timestep=int(len(states)/num_timesteps)
-        #self.last_state = states[-1].ravel()
+        self.last_state = states[-1].ravel()
 
         return states
 
@@ -66,19 +54,13 @@ class Static(QReservoir):
             predictions = np.zeros((num_pred + len(from_series), prediction_dimension), dtype=np.array(from_series).dtype)
 
         predictions[:len(from_series)] = from_series
-        #print("predictions", predictions)
 
         for i in tqdm(range(num_pred), desc="Predicting..."):
             curidx = len(from_series) + i
-            #print("running reservoir with (", i, ")", predictions[:curidx][-M:])
             states = self.run(predictions[:curidx][-M:],  **kwargs)
 
-            #pred_state = states[-1*len(from_series):]#.reshape((len(from_series), -1))[
             pred_state = states[-1].reshape((1, -1))
-            #print("i am here, you you!", pred_state)
             predictions[curidx] = model.predict(pred_state)
-            #print("predictions(", i, ")", predictions)
-            #self.last_state = pred_state.ravel()
 
         return predictions, pred_state#[-num_pred:]
 
