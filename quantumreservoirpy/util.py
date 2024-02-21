@@ -1,5 +1,9 @@
 import numpy as np
-from .randomcircuit import random_circuit
+
+from sklearn.model_selection import train_test_split
+
+from qiskit import QuantumCircuit, QuantumRegister
+
 
 def listify(elem):
     try:
@@ -9,7 +13,7 @@ def listify(elem):
 
 
 def memory_to_mean(memory):
-    """ Utility for analyzing qiskit.Result.get_memory() memory.
+    """Utility for analyzing qiskit.Result.get_memory() memory.
     Assumes the data is a list indexed by shots.
     """
 
@@ -18,32 +22,56 @@ def memory_to_mean(memory):
     return np.average(numb, axis=0)
 
 
-from qiskit.quantum_info import SparsePauliOp
-def random_ising_H(num_qubits, num_terms, low=-0.5, high=0.5, h=0):
-    possibles = ["X", "Y", "Z"]
+# from qiskit.quantum_info import SparsePauliOp
+# def random_ising_H(num_qubits, num_terms, low=-0.5, high=0.5, h=0):
+#    possibles = ["X", "Y", "Z"]
+#
+#    weights = np.random.uniform(low=low, high=high)
+#
+#    ops = np.full(shape=(num_terms, num_qubits), fill_value="I")
+#
+#    ops[:, :2] = np.random.choice(possibles, size=(num_terms, 2))
+#
+#    pauli_strings = [['IIII']]*num_terms
+#    for i in range(num_terms):
+#        pauli_strings[i] = "".join(ops[i][np.random.permutation(num_qubits)])
+#
+#    return SparsePauliOp(
+#        data=pauli_strings, coeffs=weights
+#    ).to_operator()
 
-    weights = np.random.uniform(low=low, high=high)
 
-    ops = np.full(shape=(num_terms, num_qubits), fill_value="I")
-
-    ops[:, :2] = np.random.choice(possibles, size=(num_terms, 2))
-
-    pauli_strings = [['IIII']]*num_terms
-    for i in range(num_terms):
-        pauli_strings[i] = "".join(ops[i][np.random.permutation(num_qubits)])
-
-    return SparsePauliOp(
-        data=pauli_strings, coeffs=weights
-    ).to_operator()
-
-
-from sklearn.model_selection import train_test_split
-def stress_test_models(X_data, y_data, models, test_to_train_ratio=1/3, N=100):
+def stress_test_models(X_data, y_data, models, test_to_train_ratio=1 / 3, N=100):
     results = np.zeros(len(models))
     for _ in range(N):
-        X_train, X_test, y_train, y_test = train_test_split(X_data, y_data, test_size=test_to_train_ratio)
+        X_train, X_test, y_train, y_test = train_test_split(
+            X_data, y_data, test_size=test_to_train_ratio
+        )
         for i, model in enumerate(models):
             model.fit(X_train, y_train)
             score = model.score(X_test, y_test)
             results[i] += score
-    return results/N
+    return results / N
+
+
+def get_weights(k, a, b):
+    return (b - a) * np.random.random_sample(k) + a
+
+
+def randomIsing(n, topology, trottersteps, t):
+    q = QuantumRegister(n)
+    circuit = QuantumCircuit(q)
+    Jx = get_weights(len(topology), -1, 1)
+    Jz = get_weights(len(topology), -1, 1)
+    hx = get_weights(n, -0.5, 0.5)
+    hy = get_weights(n, -0.5, 0.5)
+    hz = get_weights(n, -0.5, 0.5)
+    for _ in range(trottersteps):
+        for i in range(n):
+            circuit.rx(t * hx[i], i)
+            circuit.ry(t * hy[i], i)
+            circuit.rz(t * hz[i], i)
+        for i, e in enumerate(topology):
+            circuit.rzz(t * Jx[i], e[0], e[1])
+            circuit.rxx(t * Jz[i], e[0], e[1])
+    return circuit, Jx, Jz, hx, hy, hz

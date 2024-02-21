@@ -86,18 +86,14 @@ def random_circuit(num_qubits, gates, depth, fillgrade=1):
         if n_q > num_qubits:
             continue
 
-        extended_gates.append(
-            (gate, n_q, n_p)
-        )
+        extended_gates.append((gate, n_q, n_p))
 
         if n_q == 1:
-            gates_1q.append(
-                (gate, n_q, n_p)
-            )
-
+            gates_1q.append((gate, n_q, n_p))
 
     gates = np.array(
-        extended_gates, dtype=[("class", object), ("num_qubits", np.int64), ("num_params", np.int64)]
+        extended_gates,
+        dtype=[("class", object), ("num_qubits", np.int64), ("num_params", np.int64)],
     )
     gates_1q = np.array(gates_1q, dtype=gates.dtype)
 
@@ -125,7 +121,7 @@ def random_circuit(num_qubits, gates, depth, fillgrade=1):
         max_index = np.searchsorted(cumulative_qubits, num_qubits, side="right")
         gate_specs = gate_specs[:max_index]
         slack = num_qubits - cumulative_qubits[max_index - 1]
-        if slack and filling[i] <  fillgrade:
+        if slack and filling[i] < fillgrade:
             gate_specs = np.hstack((gate_specs, rng.choice(gates_1q, size=slack)))
 
         # For efficiency in the Python loop, this uses Numpy vectorisation to pre-calculate the
@@ -144,9 +140,15 @@ def random_circuit(num_qubits, gates, depth, fillgrade=1):
         # faster, since in Python we don't have a compiler to do this for us.
 
         for gate, q_start, q_end, p_start, p_end in zip(
-            gate_specs["class"], q_indices[:-1], q_indices[1:], p_indices[:-1], p_indices[1:]
+            gate_specs["class"],
+            q_indices[:-1],
+            q_indices[1:],
+            p_indices[:-1],
+            p_indices[1:],
         ):
             operation = gate(*parameters[p_start:p_end])
-            qc._append(CircuitInstruction(operation=operation, qubits=qubits[q_start:q_end]))
+            qc._append(
+                CircuitInstruction(operation=operation, qubits=qubits[q_start:q_end])
+            )
 
     return qc
