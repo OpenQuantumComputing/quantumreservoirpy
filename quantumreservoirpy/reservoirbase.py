@@ -1,7 +1,7 @@
 import warnings
 import numpy as np
 
-from reservoircircuit import ReservoirCircuit, CountingCircuit
+from quantumreservoirpy.reservoircircuit import ReservoirCircuit, CountingCircuit
 
 from abc import ABC, abstractmethod
 import qiskit as qs

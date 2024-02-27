@@ -7,6 +7,6 @@
 #SBATCH --tasks-per-node=1
 #SBATCH --cpus-per-task=32
 
-#source activate qiskit
+source qiskit/bin/activate
 
 python random_sample_all.py

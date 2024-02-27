@@ -1,6 +1,6 @@
 import numpy as np
 
-from util import listify
+from quantumreservoirpy.util import listify
 
 from qiskit import QuantumCircuit, ClassicalRegister
 

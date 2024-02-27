@@ -3,8 +3,8 @@ import numpy as np
 
 import inspect
 
-from util import randomIsing
-from reservoirs import Static
+from quantumreservoirpy.util import randomIsing
+from quantumreservoirpy.reservoirs import Static
 
 
 class PartialMeasurement(Static):
@@ -18,7 +18,6 @@ class PartialMeasurement(Static):
         basis="X",
         num_reservoirs=1,
     ) -> None:
-        
         print("backend=", backend)
         super().__init__(
             n_qubits, memory, backend, degree=degree, num_reservoirs=num_reservoirs
@@ -47,18 +46,18 @@ class PartialMeasurement(Static):
 
     def get_params(self):
         return (
-                    self.steps,
-                    self.dt,
-                    self.top,
-                    self.Jx,
-                    self.Jz,
-                    self.hx,
-                    self.hy,
-                    self.hz,
-                    self.basis,
-                )
+            self.steps,
+            self.dt,
+            self.top,
+            self.Jx,
+            self.Jz,
+            self.hx,
+            self.hy,
+            self.hz,
+            self.basis,
+        )
 
-    #def __reduce_ex__(self, protocol):
+    # def __reduce_ex__(self, protocol):
     #    print("reduce_ex called")
     #    current_frame = inspect.currentframe()
     #    calling_frame = inspect.getouterframes(current_frame, 2)[1]
@@ -90,10 +89,10 @@ class PartialMeasurement(Static):
 
     def during(self, circuit, timestep, reservoirnumber):
         # encode
-        #for k in range(self.n_meas):
+        # for k in range(self.n_meas):
         #    beta = 3**k
         #    circuit.rx(-beta / 2 * np.pi * timestep, k)
-        circuit.rx(np.pi*timestep, 0)
+        circuit.rx(np.pi * timestep, 0)
 
         # reservoir
         circuit.append(self.U[reservoirnumber], range(self.n_qubits))

@@ -10,6 +10,7 @@ import joblib
 import tikzplotlib
 
 # qiskit stuff
+import qiskit
 from qiskit_aer import AerSimulator
 from qiskit import *
 from qiskit.quantum_info import *
@@ -17,12 +18,13 @@ from qiskit.circuit.random import random_circuit
 from random import choice, sample
 
 # quantumreservoirpy
-from partialmeasurement import PartialMeasurement
-from stabilizer import Stabilizer
-from util import *
+from quantumreservoirpy.partialmeasurement import PartialMeasurement
+from quantumreservoirpy.stabilizer import Stabilizer
+from quantumreservoirpy.util import *
 
 # sklearn
 from sklearn.model_selection import TimeSeriesSplit
+
 
 def get_time_series(t_stop=200):
     G = 9.8  # acceleration due to gravity, in m/s^2
@@ -141,7 +143,6 @@ def main(
 ):
     worker = Worker(num_qubits, num_meas, num_reservoirs, degree, typ, noise_model)
 
-
     global states, resmodelparams
     states = []
     resmodelparams = []
@@ -153,9 +154,9 @@ def main(
             args=(timeseries, num_shots),
             callback=saveResult,
         )
-        #try:
+        # try:
         #    deb.get()
-        #except Exception as e:
+        # except Exception as e:
         #    print("Exception in worker.fit:", e)
     pool.close()
     pool.join()
@@ -187,31 +188,34 @@ def main(
 if __name__ == "__main__":
     print("Creating time series...")
     x2, y2 = get_time_series()
-    k = 50
+    k = 20
     ts = ((x2[::k] + 2) / 4)[200:]
 
     tscv = TimeSeriesSplit()
     # Iterate through the splits and get the indices for the first fold
+    cou = 0
     for train_index, test_index in tscv.split(ts):
+        if cou < 2:
+            continue
+        cou += 1
         train_indices_first_fold = train_index
         test_indices_first_fold = test_index
-        break  # Stop after the first fold
+        # break  # Stop after the first fold
 
     timeseries = ts[train_index]
     print("done.")
 
-    num_samples = 2
+    num_samples = 10
 
-    num_qubits = 4
-    num_meas = 3
-    num_reservoirs = 3
+    num_qubits = 8
+    num_meas = 6
+    num_reservoirs = 5
     noise_model = None
     num_shots = 10**3
 
     degree = num_meas
 
     for typ in ["standard", "stabilizer"]:
-
         main(
             timeseries,
             num_qubits,

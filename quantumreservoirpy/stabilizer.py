@@ -39,27 +39,27 @@ class Stabilizer(Static):
 
     def get_params(self):
         return (
-                    self.steps,
-                    self.dt,
-                    self.top,
-                    self.Jx,
-                    self.Jz,
-                    self.hx,
-                    self.hy,
-                    self.hz,
-                )
+            self.steps,
+            self.dt,
+            self.top,
+            self.Jx,
+            self.Jz,
+            self.hx,
+            self.hy,
+            self.hz,
+        )
 
     def during(self, circuit, timestep, reservoirnumber):
         circuit.barrier()
 
         # encode
-        #for k in range(self.n_meas):
+        # for k in range(self.n_meas):
         #    beta = 3**k
         #    circuit.rx(-beta / 2 * np.pi * timestep, k)
-        circuit.rx(np.pi*timestep, 0)
+        circuit.rx(np.pi * timestep, 0)
 
         # reservoir
-        circuit.append(self.U[reservoirnumber], range(self.n_qubits-1))
+        circuit.append(self.U[reservoirnumber], range(self.n_qubits - 1))
 
         # decode
         cr = ClassicalRegister(self.n_meas)
@@ -67,7 +67,7 @@ class Stabilizer(Static):
         circuit.barrier()
         for j in range(self.n_meas):
             circuit.append(self.cs[j], range(self.n_qubits))
-            circuit.measure(circuit.qubits[self.n_qubits-1], cr[j])
+            circuit.measure(circuit.qubits[self.n_qubits - 1], cr[j])
             circuit.barrier()
 
         Stabilizer.apply_operations_for_integers(circuit, cr, self.decodermap)

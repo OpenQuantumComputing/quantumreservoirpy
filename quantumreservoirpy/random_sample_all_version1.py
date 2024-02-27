@@ -17,9 +17,9 @@ from qiskit.circuit.random import random_circuit
 from random import choice, sample
 
 # quantumreservoirpy
-from partialmeasurement import PartialMeasurement
-from stabilizer import Stabilizer
-from util import *
+from quantumreservoirpy.partialmeasurement import PartialMeasurement
+from quantumreservoirpy.stabilizer import Stabilizer
+from quantumreservoirpy.util import *
 
 # sklearn
 from sklearn.model_selection import TimeSeriesSplit
@@ -224,9 +224,9 @@ def main(
             args=(ts[train_index], num_shots, pipe_, WARMUP),
             callback=saveResult,
         )
-        #try:
+        # try:
         #    deb.get()
-        #except Exception as e:
+        # except Exception as e:
         #    print("Exception in worker.fit:", e)
     pool.close()
     pool.join()
@@ -271,7 +271,6 @@ if __name__ == "__main__":
     num_samples = 10
     num_shots = 10**3
     for typ in ["standard", "stabilizer"]:
-
         main(
             ts,
             num_qubits,

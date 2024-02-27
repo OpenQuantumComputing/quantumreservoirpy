@@ -5,9 +5,9 @@ import numpy as np
 from itertools import combinations
 from tqdm import tqdm
 
-from reservoirbase import QReservoir
-from util import memory_to_mean
-from statistic import Statistic
+from quantumreservoirpy.reservoirbase import QReservoir
+from quantumreservoirpy.util import memory_to_mean
+from quantumreservoirpy.statistic import Statistic
 
 
 class Static(QReservoir):
@@ -38,21 +38,29 @@ class Static(QReservoir):
 
             for t in range(num_timesteps):
                 indices = range(num_measq_pt)
-                states_t = [self.__getE(O, counts, t) for k in range(1, self.degree + 1) for O in combinations(indices, k)]
+                states_t = [
+                    self.__getE(O, counts, t)
+                    for k in range(1, self.degree + 1)
+                    for O in combinations(indices, k)
+                ]
                 states_list_this.append(np.array(states_t))
 
-            states = np.stack(states_list_this, axis=0) if nr == 1 else np.hstack((states, np.stack(states_list_this, axis=0)))
+            states = (
+                np.stack(states_list_this, axis=0)
+                if nr == 1
+                else np.hstack((states, np.stack(states_list_this, axis=0)))
+            )
 
-            #for t in range(num_timesteps):
+            # for t in range(num_timesteps):
             #    states_t = []
             #    indices = range(num_measq_pt)
             #    for k in range(1, self.degree + 1):
             #        for O in list(combinations(indices, k)):
             #            states_t.append(self.__getE(O, counts, t))
             #    states_list_this.append(np.array(states_t))
-            #if nr == 1:
+            # if nr == 1:
             #    states = np.stack(states_list_this, axis=0)
-            #else:
+            # else:
             #    states = np.hstack((states, np.stack(states_list_this, axis=0)))
 
         self.last_state = states[-1].ravel()
@@ -85,7 +93,7 @@ class Static(QReservoir):
 
         return predictions, pred_state  # [-num_pred:]
 
-    #def __getE(self, Obs, counts, t):
+    # def __getE(self, Obs, counts, t):
     #    stat = Statistic()
     #    stat.reset()
     #    # E=0
@@ -113,6 +121,7 @@ class Static(QReservoir):
             stat.add_sample(val, count)
 
         return stat.get_E()
+
 
 class Incremental(QReservoir):
     def __init__(self, n_qubits, memory=np.inf, backend=None, num_features=-1) -> None:
