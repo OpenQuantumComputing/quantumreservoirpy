@@ -14,6 +14,11 @@ class Static(QReservoir):
     def run(self, timeseries, **kwargs):
         transpile = kwargs.pop("transpile", True)
         tqdm_disable = kwargs.pop("tqdm", False)
+        self.precision = kwargs.pop("precision", None)
+        shots = kwargs.pop("shots", 10**3)
+
+        num_timesteps = len(timeseries)
+        self.shots_taken = {}
 
         for nr in tqdm(
             range(1, self.num_reservoirs + 1),
@@ -27,41 +32,40 @@ class Static(QReservoir):
                 reservoir_number=nr,
             ).reverse_bits()
 
-            self._job = self.backend.run(circ, **kwargs)
-            counts = self._job.result().get_counts()
+            self.stat = {}  # create new statistics
+            shots_total = 0
+            while True:
+                kwargs["shots"] = shots
+                self._job = self.backend.run(circ, **kwargs)
+                counts = self._job.result().get_counts()
 
-            num_timesteps = len(timeseries)
+                shots_total += shots
+                # print(shots, shots_total)
+                states_list, var_list = self.measurementStatistics(
+                    counts, num_timesteps
+                )
+                # print(shots_total, states_list[0])
 
-            num_measq_pt = int(len(list(counts.keys())[0]) / num_timesteps)
-
-            states_list_this = []
-
-            for t in range(num_timesteps):
-                indices = range(num_measq_pt)
-                states_t = [
-                    self.__getE(O, counts, t)
-                    for k in range(1, self.degree + 1)
-                    for O in combinations(indices, k)
-                ]
-                states_list_this.append(np.array(states_t))
+                if not self.precision:
+                    break
+                else:
+                    v = np.amax(np.concatenate(var_list))
+                    # print("max var=", v)
+                    shots = int(v / (self.precision) ** 2) - shots_total
+                    if shots <= 0:
+                        break
 
             states = (
-                np.stack(states_list_this, axis=0)
+                np.stack(states_list, axis=0)
                 if nr == 1
-                else np.hstack((states, np.stack(states_list_this, axis=0)))
+                else np.hstack((states, np.stack(states_list, axis=0)))
             )
-
-            # for t in range(num_timesteps):
-            #    states_t = []
-            #    indices = range(num_measq_pt)
-            #    for k in range(1, self.degree + 1):
-            #        for O in list(combinations(indices, k)):
-            #            states_t.append(self.__getE(O, counts, t))
-            #    states_list_this.append(np.array(states_t))
-            # if nr == 1:
-            #    states = np.stack(states_list_this, axis=0)
-            # else:
-            #    states = np.hstack((states, np.stack(states_list_this, axis=0)))
+            self.variances = (
+                np.stack(var_list, axis=0)
+                if nr == 1
+                else np.hstack((self.variances, np.stack(var_list, axis=0)))
+            )
+            self.shots_taken[nr] = shots_total
 
         self.last_state = states[-1].ravel()
 
@@ -93,34 +97,43 @@ class Static(QReservoir):
 
         return predictions, pred_state  # [-num_pred:]
 
-    # def __getE(self, Obs, counts, t):
-    #    stat = Statistic()
-    #    stat.reset()
-    #    # E=0
-    #    totalcounts = 0
-    #    for key in counts:
-    #        val = 1
-    #        totalcounts += counts[key]
-    #        key_t = key.split()[t]
-    #        # val = (-1)**(key_t[Obs].count("1"))
-    #        for ind_O in Obs:
-    #            val *= 1.0 - 2 * int(key_t[ind_O])
-    #        stat.add_sample(val, counts[key])
-    #        # E+=val*counts[key]
-    #    return stat.get_E()  # /totalcounts
+    def measurementStatistics(self, counts, num_timesteps):
+        states_list = []
+        var_list = []
 
-    def __getE(self, Obs, counts, t):
-        stat = Statistic()
-        stat.reset()
-        totalcounts = 0
+        # number of measurements per time step
+        num_meas_pt = int(len(list(counts.keys())[0]) / num_timesteps)
 
+        for t in range(num_timesteps):
+            sl = []
+            vl = []
+            indices = range(num_meas_pt)
+            for k in range(1, self.degree + 1):
+                for O in combinations(indices, k):
+                    statkey = str(t) + " " + str(O)
+                    self.stat.setdefault(statkey, Statistic())
+                    Static.__add_counts(self.stat[statkey], O, counts, t)
+                    sl.append(self.stat[statkey].get_E())
+                    vl.append(self.stat[statkey].get_Variance())
+            states_list.append(np.array(sl))
+            var_list.append(np.array(vl))
+
+        return states_list, var_list
+
+    @staticmethod
+    def __add_counts(stat, Obs, counts, t):
+        # tmp_counts=0
+        # tmp_vals=[]
         for key, count in counts.items():
-            totalcounts += count
             key_t = key.split()[t]
-            val = np.prod(1.0 - 2 * np.array([int(key_t[ind_O]) for ind_O in Obs]))
+            val = (
+                0.5
+                - np.prod(1 - 2.0 * np.array([int(key_t[ind_O]) for ind_O in Obs])) / 2
+            )
             stat.add_sample(val, count)
-
-        return stat.get_E()
+            # tmp_counts+=count
+            # tmp_vals.append(val*count)
+        # print(" -> ", np.var(np.array(tmp_vals)))
 
 
 class Incremental(QReservoir):
