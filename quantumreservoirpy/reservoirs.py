@@ -34,12 +34,14 @@ class Static(QReservoir):
 
             self.stat = {}  # create new statistics
             shots_total = 0
+            new_shots = shots
+
             while True:
-                kwargs["shots"] = shots
+                kwargs["shots"] = new_shots
                 self._job = self.backend.run(circ, **kwargs)
                 counts = self._job.result().get_counts()
 
-                shots_total += shots
+                shots_total += new_shots
                 # print(shots, shots_total)
                 states_list, var_list = self.measurementStatistics(
                     counts, num_timesteps
@@ -51,8 +53,8 @@ class Static(QReservoir):
                 else:
                     v = np.amax(np.concatenate(var_list))
                     # print("max var=", v)
-                    shots = int(v / (self.precision) ** 2) - shots_total
-                    if shots <= 0:
+                    new_shots = int(v / (self.precision) ** 2) - shots_total
+                    if new_shots <= 0:
                         break
 
             states = (

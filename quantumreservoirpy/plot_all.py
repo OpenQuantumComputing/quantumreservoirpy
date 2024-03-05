@@ -169,10 +169,10 @@ if __name__ == "__main__":
                 + "_"
                 + str(num_shots)
                 + "_"
-                + str()
+                + str(precision)
                 + ".sav"
             )
-            [ts, states, resmodelparams] = joblib.load(filename)
+            [ts, states, variances, shots_taken, resmodelparams] = joblib.load(filename)
 
             assert len(states) == num_samples
 

@@ -1,4 +1,6 @@
 # standard libs
+import traceback
+import sys
 import time
 import itertools
 import numpy as np
@@ -90,7 +92,6 @@ def get_time_series(t_stop=200):
 
 
 class Worker:
-
     """n = dim(hilbert space)"""
 
     def __init__(
@@ -103,7 +104,7 @@ class Worker:
         self.typ = typ
         self.noise_model = noise_model
 
-    def run(self, X_train, num_shots):
+    def run(self, X_train, num_shots, precision):
         if typ == "standard":
             self.resmodel = PartialMeasurement(
                 self.num_qubits,
@@ -120,14 +121,23 @@ class Worker:
                 degree=self.degree,
                 num_reservoirs=self.num_reservoirs,
             )
-        states = self.resmodel.run(timeseries=X_train, shots=num_shots)
-        return states, self.resmodel.get_params()
+        states = self.resmodel.run(
+            timeseries=X_train, shots=num_shots, precision=precision
+        )
+        return (
+            states,
+            self.resmodel.variances,
+            self.resmodel.shots_taken,
+            self.resmodel.get_params(),
+        )
 
 
 def saveResult(res):
-    global states, resmodelparams
+    global states, variances, shots_taken, resmodelparams
     states.append(res[0])
-    resmodelparams.append(res[1])
+    variances.append(res[1])
+    shots_taken.append(res[2])
+    resmodelparams.append(res[3])
 
 
 def main(
@@ -140,24 +150,28 @@ def main(
     noise_model,
     num_samples,
     num_shots,
+    precision,
 ):
     worker = Worker(num_qubits, num_meas, num_reservoirs, degree, typ, noise_model)
 
-    global states, resmodelparams
+    global states, variances, shots_taken, resmodelparams
     states = []
+    variances = []
+    shots_taken = []
     resmodelparams = []
 
     pool = Pool()
     for j in range(num_samples):
         deb = pool.apply_async(
             worker.run,
-            args=(timeseries, num_shots),
+            args=(timeseries, num_shots, precision),
             callback=saveResult,
         )
         # try:
-        #    deb.get()
+        #   deb.get()
         # except Exception as e:
-        #    print("Exception in worker.fit:", e)
+        #   print("Exception in worker.run:", e)
+        #   traceback.print_exc()
     pool.close()
     pool.join()
 
@@ -179,10 +193,10 @@ def main(
         + "_"
         + str(num_shots)
         + "_"
-        + str()
+        + str(precision)
         + ".sav"
     )
-    joblib.dump([timeseries, states, resmodelparams], filename)
+    joblib.dump([timeseries, states, variances, shots_taken, resmodelparams], filename)
 
 
 if __name__ == "__main__":
@@ -193,25 +207,36 @@ if __name__ == "__main__":
 
     tscv = TimeSeriesSplit()
     # Iterate through the splits and get the indices for the first fold
-    cou = 0
+    # cou = 0
     for train_index, test_index in tscv.split(ts):
-        if cou < 2:
-            continue
-        cou += 1
+        # if cou < 2:
+        #    continue
+        # cou += 1
         train_indices_first_fold = train_index
         test_indices_first_fold = test_index
-        # break  # Stop after the first fold
+        break  # Stop after the first fold
 
     timeseries = ts[train_index]
     print("done.")
 
-    num_samples = 10
+    # num_samples = 20
 
-    num_qubits = 8
-    num_meas = 6
-    num_reservoirs = 5
+    # for num_qubits in [6,5,4,3]:
+    #    for num_meas in range(2, num_qubits):
+    ##num_qubits = 4
+    ##num_meas = 3
+    #        num_reservoirs = 10-num_meas
+
+    num_qubits = int(sys.argv[1])
+    num_meas = int(sys.argv[2])
+    num_reservoirs = int(sys.argv[3])
+    num_samples = int(sys.argv[4])
+
+    print("Running:", num_qubits, num_meas, num_reservoirs, num_samples)
+
     noise_model = None
     num_shots = 10**3
+    precision = 1e-2
 
     degree = num_meas
 
@@ -226,4 +251,5 @@ if __name__ == "__main__":
             noise_model,
             num_samples,
             num_shots,
+            precision,
         )

@@ -18,7 +18,6 @@ class PartialMeasurement(Static):
         basis="X",
         num_reservoirs=1,
     ) -> None:
-        print("backend=", backend)
         super().__init__(
             n_qubits, memory, backend, degree=degree, num_reservoirs=num_reservoirs
         )

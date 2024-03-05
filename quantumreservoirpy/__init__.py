@@ -1,3 +1,3 @@
-from . import reservoirs
-from . import plot
-from . import music
+from quantumreservoirpy import reservoirs
+from quantumreservoirpy import music
+from quantumreservoirpy import plot

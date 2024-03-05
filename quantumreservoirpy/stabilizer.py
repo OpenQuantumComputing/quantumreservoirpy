@@ -2,8 +2,8 @@ from itertools import combinations, product
 import numpy as np
 from qiskit import QuantumCircuit, ClassicalRegister, QuantumRegister
 
-from util import randomIsing
-from reservoirs import Static
+from quantumreservoirpy.util import randomIsing
+from quantumreservoirpy.reservoirs import Static
 
 
 class Stabilizer(Static):

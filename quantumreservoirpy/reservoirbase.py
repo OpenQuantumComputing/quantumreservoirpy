@@ -4,8 +4,9 @@ import numpy as np
 from quantumreservoirpy.reservoircircuit import ReservoirCircuit, CountingCircuit
 
 from abc import ABC, abstractmethod
-import qiskit as qs
-from qiskit import Aer
+
+from qiskit_aer import AerSimulator
+from qiskit import *
 from qiskit.providers import Backend
 
 
@@ -41,7 +42,7 @@ class QReservoir(BaseReservoir):
             warnings.warn(
                 "Argument 'backend' must inherit from qiskits abstract 'Backend'. Using 'aer_simulator' instead"
             )
-            self.backend = Aer.get_backend("aer_simulator")
+            self.backend = AerSimulator()
 
         self.n_qubits = n_qubits
         self.memory = memory
@@ -66,7 +67,7 @@ class QReservoir(BaseReservoir):
             temp_circ = CountingCircuit(self.n_qubits, circ.num_clbits)
             circ = self.__build(temp_circ, timeseries, reservoir_number)
         if transpile:
-            circ = qs.transpile(circ, self.backend)
+            circ = transpile(circ, self.backend)
         return circ
 
     @property
