@@ -6,7 +6,7 @@ from quantumreservoirpy.reservoircircuit import ReservoirCircuit, CountingCircui
 from abc import ABC, abstractmethod
 
 from qiskit_aer import AerSimulator
-from qiskit import *
+from qiskit.compiler import transpile as qtranspile
 from qiskit.providers import Backend
 
 
@@ -67,7 +67,7 @@ class QReservoir(BaseReservoir):
             temp_circ = CountingCircuit(self.n_qubits, circ.num_clbits)
             circ = self.__build(temp_circ, timeseries, reservoir_number)
         if transpile:
-            circ = transpile(circ, self.backend)
+            circ = qtranspile(circ, self.backend)
         return circ
 
     @property

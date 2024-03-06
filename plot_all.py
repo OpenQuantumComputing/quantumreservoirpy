@@ -25,25 +25,44 @@ from sklearn.pipeline import Pipeline
 from sklearn.linear_model import Ridge
 
 
-def fit_model(model, res_states, series, WARMUP):
+def shift_down(arr, k):
+    t, o = arr.shape
+    result = np.zeros_like(arr)
+
+    for j in range(o):
+        result[k:, j] = arr[: t - k, j]
+
+    return result
+
+
+def create_shifted_array(a, k):
+    t, o = a.shape
+    result = np.zeros((t, k * o), dtype=a.dtype)
+
+    for i in range(k):
+        result[:, i * o : (i + 1) * o] = shift_down(a, i)
+
+    return result
+
+
+def fit_model(model, res_states, series, WARMUP, timeplex):
     warmup = int(len(series) * WARMUP)
 
-    X = res_states
-    y = series
+    X = res_states[warmup:-1]
+    y = series[warmup + 1 :]
 
-    X = X[warmup:]
-    y = y[warmup:]
-
+    if timeplex > 1:
+        X = create_shifted_array(X, timeplex)
     model.fit(X, y)
 
     return model, X, y
 
 
-def fit(states, X_train, pipe, WARMUP, degree=None, maxdegree=None):
+def fit(states, X_train, pipe, WARMUP, degree=None, maxdegree=None, timeplex=None):
     scores = []
     predictions = []
 
-    if maxdegree:
+    if False:  # maxdegree:
         shift = 2**maxdegree - 1
         num_reservoirs = states.shape[1] / shift
         assert num_reservoirs.is_integer()
@@ -56,7 +75,7 @@ def fit(states, X_train, pipe, WARMUP, degree=None, maxdegree=None):
         for ti in range(num_reservoirs):
             # print(shift, ti, num_obs)
             indices += list(range(shift * ti, shift * ti + num_obs))
-            pipe, X, y = fit_model(pipe, states[:, indices], X_train, WARMUP)
+            pipe, X, y = fit_model(pipe, states[:, indices], X_train, WARMUP, timeplex)
             score = pipe.score(X, y)
             prediction = pipe.predict(X)
             scores.append(score)
@@ -65,7 +84,7 @@ def fit(states, X_train, pipe, WARMUP, degree=None, maxdegree=None):
 
     else:
         for j in range(1, states.shape[1] + 1):
-            pipe, X, y = fit_model(pipe, states[:, :j], X_train, WARMUP)
+            pipe, X, y = fit_model(pipe, states[:, :j], X_train, WARMUP, timeplex)
             score = pipe.score(X, y)
             prediction = pipe.predict(X)
             scores.append(score)
@@ -82,11 +101,15 @@ def calculate_mean_std(arrays):
     return mean_values, std_values
 
 
-def plot_file(filename, col, color, style, text, WARMUP, degree=None, maxdegree=None):
+def plot_file(
+    filename, col, color, style, text, WARMUP, degree=None, maxdegree=None, timeplex=1
+):
     # degree defines up to which degree we include the observables
     # max degree, equals maximum degree available, which should be equal to 2^(number of measured states) -1
-    [ts, states, resmodelparams] = joblib.load(filename)
-    scores = get_scores(states, ts, WARMUP, degree=degree, maxdegree=maxdegree)
+    [ts, states, variances, shots_taken, resmodelparams] = joblib.load(filename)
+    scores = get_scores(
+        states, ts, WARMUP, degree=degree, maxdegree=maxdegree, timeplex=timeplex
+    )
     plot_EV(scores, col, color, style, text)
 
 
@@ -98,7 +121,7 @@ def plot_EV(scores, col, color, style, text):
         x,
         mean - std,
         mean + std,
-        color=color,
+        # color=color,
         alpha=0.35,
         label=r"$1\sigma$",
     )
@@ -111,7 +134,7 @@ def sum_binomial_coefficients(n, l):
     return int(ret)
 
 
-def get_scores(states, ts, WARMUP, degree, maxdegree):
+def get_scores(states, ts, WARMUP, degree, maxdegree, timeplex):
     scores = []
 
     num_samples = len(states)
@@ -129,7 +152,13 @@ def get_scores(states, ts, WARMUP, degree, maxdegree):
         # print(states[i].shape, ts.shape)
 
         sc, _, _, _, _ = fit(
-            states[i], ts, pipe, WARMUP, degree=degree, maxdegree=maxdegree
+            states[i],
+            ts,
+            pipe,
+            WARMUP,
+            degree=degree,
+            maxdegree=maxdegree,
+            timeplex=timeplex,
         )
         scores.append(sc)
     return scores
@@ -322,47 +351,39 @@ if __name__ == "__main__":
         #    "stabilizer, 7,6,5, 10^4 shots",
         #    WARMUP
         # )
-        plot_file(
-            "simulation_5_3_5_3_standard_None_10_10000_.sav",
-            "k",
-            "black",
-            "o",
-            "standard,  5,3,5, 10^4 shots",
-            WARMUP,
-            degree=3,
-            maxdegree=3,
-        )
-        plot_file(
-            "simulation_4_3_5_3_standard_None_10_10000_.sav",
-            "c",
-            "cyan",
-            "o",
-            "standard, 4,3,5, 10^4 shots",
-            WARMUP,
-            degree=3,
-            maxdegree=3,
-        )
+        # simulation_3_2_8_2_stabilizer_None_20_1000_0.01.sav
+        # simulation_4_2_8_2_stabilizer_None_20_1000_0.01.sav
+        # simulation_4_3_7_3_stabilizer_None_20_1000_0.01.sav
+        # simulation_5_2_8_2_stabilizer_None_20_1000_0.01.sav
+        # simulation_5_3_7_3_stabilizer_None_20_1000_0.01.sav
+        # simulation_5_4_6_4_stabilizer_None_20_1000_0.01.sav
+        # simulation_6_2_8_2_stabilizer_None_20_1000_0.01.sav
+        # simulation_6_3_7_3_stabilizer_None_20_1000_0.01.sav
+        # simulation_6_4_6_4_stabilizer_None_20_1000_0.01.sav
+        # simulation_6_5_5_5_stabilizer_None_20_1000_0.01.sav
 
-        plot_file(
-            "simulation_4_3_5_3_stabilizer_None_10_10000_.sav",
-            "b",
-            "blue",
-            "o",
-            "stabilizer, 4,3,5, 10^4 shots",
-            WARMUP,
-            degree=3,
-            maxdegree=3,
-        )
-        plot_file(
-            "simulation_5_3_5_3_stabilizer_None_10_10000_.sav",
-            "r",
-            "red",
-            "o",
-            "stabilizer, 5,3,5, 10^4 shots",
-            WARMUP,
-            degree=3,
-            maxdegree=3,
-        )
+        # for [nq, nm, nr] in [[3, 2, 8], [4, 2, 8], [4, 3, 7], [5, 3, 7], [5, 2, 8], [5, 4, 6], [6, 2, 8], [6, 3, 7], [6, 4, 6], [6, 5, 5]]:
+        # for [nq, nm, nr] in [[3, 2, 8], [4, 3, 7], [5, 4, 6], [6, 5, 5]]:
+        # for [nq, nm, nr] in [[4, 3, 7]]:
+        for [nq, nm, nr] in [[6, 5, 5]]:
+
+            for meth in ["standard", "stabilizer"]:
+                if meth == "standard":
+                    col1 = "k"
+                    col2 = "black"
+                else:
+                    col1 = "r"
+                    col2 = "red"
+        #         plot_file(
+        #                 "simulation_"+str(nq)+"_"+str(nm)+"_"+str(nr)+"_"+str(nm)+"_"+str(meth)+"_None_20_1000_0.01.sav",
+        #             col1,
+        #             col2,
+        #             "o",
+        #             str(meth) +", "+str(nq)+"_"+str(nm)+"_"+str(nr)+" 0.01",
+        #             WARMUP,
+        #             degree=nm,
+        #             maxdegree=nm,
+        #         )
         # plot_file(
         #    "simulation_8_6_5_6_standard_None_10_1000_.sav",
         #    "k",
@@ -424,7 +445,7 @@ if __name__ == "__main__":
 
         #    plot_EV(scores, "r", "red", "x", "one of the two")
         plt.legend()
-        # plt.ylim([0.5,1.01])
+        plt.ylim([0.5, 1.01])
         # plt.hlines(1, 0, 71, colors='k', linestyles="dashed")
         # plt.xlim([2,100])
         plt.ylabel("score")
@@ -432,3 +453,58 @@ if __name__ == "__main__":
         plt.savefig("test2.png")
         tikzplotlib_fix_ncols(fig)
         tikzplotlib.save("test2.tex")
+
+        fig = plt.figure()
+        for [nq, nm, nr] in [[6, 5, 5]]:
+            meth = "standard"
+            for timeplex in range(1, 8):
+                plot_file(
+                    "simulation_"
+                    + str(nq)
+                    + "_"
+                    + str(nm)
+                    + "_"
+                    + str(nr)
+                    + "_"
+                    + str(nm)
+                    + "_"
+                    + str(meth)
+                    + "_None_20_1000_0.01.sav",
+                    "",
+                    "",
+                    "x",
+                    str(meth) + " tp=" + str(timeplex),
+                    WARMUP,
+                    degree=nm,
+                    maxdegree=nm,
+                    timeplex=timeplex,
+                )
+        plt.legend()
+        plt.ylim([0.5, 1.01])
+        # plt.hlines(1, 0, 71, colors='k', linestyles="dashed")
+        # plt.xlim([2,100])
+        plt.ylabel("score")
+        plt.xlabel("number of observables")
+        plt.savefig(
+            "simulation_"
+            + str(nq)
+            + "_"
+            + str(nm)
+            + "_"
+            + str(nr)
+            + "_"
+            + str(nm)
+            + "_None_20_1000_0.01.png"
+        )
+        tikzplotlib_fix_ncols(fig)
+        tikzplotlib.save(
+            "simulation_"
+            + str(nq)
+            + "_"
+            + str(nm)
+            + "_"
+            + str(nr)
+            + "_"
+            + str(nm)
+            + "_None_20_1000_0.01.tex"
+        )
