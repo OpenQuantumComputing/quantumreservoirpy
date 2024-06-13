@@ -2,8 +2,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import joblib
-import tikzplotlib
+#import tikzplotlib
 from scipy.special import comb
+
+from quantumreservoirpy.util import create_shifted_array
 
 
 def tikzplotlib_fix_ncols(obj):
@@ -25,24 +27,6 @@ from sklearn.pipeline import Pipeline
 from sklearn.linear_model import Ridge
 
 
-def shift_down(arr, k):
-    t, o = arr.shape
-    result = np.zeros_like(arr)
-
-    for j in range(o):
-        result[k:, j] = arr[: t - k, j]
-
-    return result
-
-
-def create_shifted_array(a, k):
-    t, o = a.shape
-    result = np.zeros((t, k * o), dtype=a.dtype)
-
-    for i in range(k):
-        result[:, i * o : (i + 1) * o] = shift_down(a, i)
-
-    return result
 
 
 def fit_model(model, res_states, series, WARMUP, timeplex):
@@ -168,12 +152,14 @@ if __name__ == "__main__":
     WARMUP = 0.3
 
     if False:
-        num_qubits = 4
-        num_meas = 3
-        num_reservoirs = 3
+
+        num_qubits = 3
+        num_meas = 2
+        num_reservoirs = 10
         noise_model = None
-        num_samples = 2
+        num_samples = 1
         num_shots = 10**3
+        precision = 0.01
 
         degree = num_meas
 
@@ -216,8 +202,8 @@ if __name__ == "__main__":
         plt.hlines(1, 0, 21, colors="k", linestyles="dashed")
         plt.xlim([0, 21])
         plt.savefig("test.png")
-        tikzplotlib_fix_ncols(fig)
-        tikzplotlib.save("test.tex")
+        #tikzplotlib_fix_ncols(fig)
+        #tikzplotlib.save("test.tex")
 
     else:
         ## fns = []
@@ -365,7 +351,7 @@ if __name__ == "__main__":
         # for [nq, nm, nr] in [[3, 2, 8], [4, 2, 8], [4, 3, 7], [5, 3, 7], [5, 2, 8], [5, 4, 6], [6, 2, 8], [6, 3, 7], [6, 4, 6], [6, 5, 5]]:
         # for [nq, nm, nr] in [[3, 2, 8], [4, 3, 7], [5, 4, 6], [6, 5, 5]]:
         # for [nq, nm, nr] in [[4, 3, 7]]:
-        for [nq, nm, nr] in [[6, 5, 5]]:
+        for [nq, nm, nr] in [[3, 2, 10]]:
 
             for meth in ["standard", "stabilizer"]:
                 if meth == "standard":
@@ -450,35 +436,35 @@ if __name__ == "__main__":
         # plt.xlim([2,100])
         plt.ylabel("score")
         plt.xlabel("number of observables")
-        plt.savefig("test2.png")
-        tikzplotlib_fix_ncols(fig)
-        tikzplotlib.save("test2.tex")
+        plt.savefig("test_sin.png")
+        #tikzplotlib_fix_ncols(fig)
+        #tikzplotlib.save("test_sin.tex")
 
         fig = plt.figure()
-        for [nq, nm, nr] in [[6, 5, 5]]:
-            meth = "standard"
-            for timeplex in range(1, 8):
-                plot_file(
-                    "simulation_"
-                    + str(nq)
-                    + "_"
-                    + str(nm)
-                    + "_"
-                    + str(nr)
-                    + "_"
-                    + str(nm)
-                    + "_"
-                    + str(meth)
-                    + "_None_20_1000_0.01.sav",
-                    "",
-                    "",
-                    "x",
-                    str(meth) + " tp=" + str(timeplex),
-                    WARMUP,
-                    degree=nm,
-                    maxdegree=nm,
-                    timeplex=timeplex,
-                )
+        for [nq, nm, nr] in [[3, 2, 10]]:
+            for meth in ["standard", "stabilizer"]:
+                for timeplex in range(1, 8):
+                    plot_file(
+                        "simulation_"
+                        + str(nq)
+                        + "_"
+                        + str(nm)
+                        + "_"
+                        + str(nr)
+                        + "_"
+                        + str(nm)
+                        + "_"
+                        + str(meth)
+                        + "_None_1_1000_0.01.sav",
+                        "",
+                        "",
+                        "x",
+                        str(meth) + " tp=" + str(timeplex),
+                        WARMUP,
+                        degree=nm,
+                        maxdegree=nm,
+                        timeplex=timeplex,
+                    )
         plt.legend()
         plt.ylim([0.5, 1.01])
         # plt.hlines(1, 0, 71, colors='k', linestyles="dashed")
@@ -494,17 +480,17 @@ if __name__ == "__main__":
             + str(nr)
             + "_"
             + str(nm)
-            + "_None_20_1000_0.01.png"
+            + "_None_1_1000_0.01.png"
         )
-        tikzplotlib_fix_ncols(fig)
-        tikzplotlib.save(
-            "simulation_"
-            + str(nq)
-            + "_"
-            + str(nm)
-            + "_"
-            + str(nr)
-            + "_"
-            + str(nm)
-            + "_None_20_1000_0.01.tex"
-        )
+        #tikzplotlib_fix_ncols(fig)
+        #tikzplotlib.save(
+        #    "simulation_"
+        #    + str(nq)
+        #    + "_"
+        #    + str(nm)
+        #    + "_"
+        #    + str(nr)
+        #    + "_"
+        #    + str(nm)
+        #    + "_None_20_1000_0.01.tex"
+        #)

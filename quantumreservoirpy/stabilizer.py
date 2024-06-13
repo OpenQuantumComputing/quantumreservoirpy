@@ -2,61 +2,54 @@ from itertools import combinations, product
 import numpy as np
 from qiskit import QuantumCircuit, ClassicalRegister, QuantumRegister
 
-from quantumreservoirpy.util import randomIsing
+from quantumreservoirpy.util import randomIsing, get_Ising_circuit
 from quantumreservoirpy.reservoirs import Static
 
 
 class Stabilizer(Static):
     def __init__(
-        self, n_qubits, n_meas, memory=np.inf, backend=None, degree=1, num_reservoirs=1
+        self,
+        n_qubits,
+        n_meas,
+        memory=np.inf,
+        backend=None,
+        degree=1,
+        num_reservoirs=1,
+        standard=False,
+        isingparams=None,
     ) -> None:
         super().__init__(
             n_qubits + 1, memory, backend, degree=degree, num_reservoirs=num_reservoirs
         )
         self.n_meas = n_meas
 
-        self.steps = 1
-        self.dt = 1.645
-        self.top = list(combinations(range(n_qubits), 2))
-        self.U = {}
-        self.Jx = {}
-        self.Jz = {}
-        self.hx = {}
-        self.hy = {}
-        self.hz = {}
-        for nr in range(1, num_reservoirs + 1):
-            (
-                self.U[nr],
-                self.Jx[nr],
-                self.Jz[nr],
-                self.hx[nr],
-                self.hy[nr],
-                self.hz[nr],
-            ) = randomIsing(n_qubits, self.top, self.steps, self.dt)
+        if not isingparams:
+            steps = 1
+            dt = 1.645
+            top = list(combinations(range(n_qubits), 2))
+            self.U = {}
+            self.isingparams = {}
+            for nr in range(1, num_reservoirs + 1):
+                (
+                    self.U[nr],
+                    self.isingparams[nr],
+                ) = randomIsing(n_qubits, top, steps, dt)
+        else:
+            self.U = {}
+            for nr in range(1, num_reservoirs + 1):
+                self.U[nr] = get_Ising_circuit(n_qubits, isingparams[nr])
 
-        self.cs = Stabilizer.get_stabilizer_circuits(n_qubits, n_meas, random=False)
-        self.decodermap = Stabilizer.build_decoder_map(n_meas + 1)
-
-    def get_params(self):
-        return (
-            self.steps,
-            self.dt,
-            self.top,
-            self.Jx,
-            self.Jz,
-            self.hx,
-            self.hy,
-            self.hz,
-        )
+        self.cs = Stabilizer.get_stabilizer_circuits(n_qubits, n_meas, random=False, standard=standard)
+        self.decodermap = Stabilizer.build_decoder_map(n_meas + 1, standard=standard)
 
     def during(self, circuit, timestep, reservoirnumber):
         circuit.barrier()
 
         # encode
-        # for k in range(self.n_meas):
-        #    beta = 3**k
-        #    circuit.rx(-beta / 2 * np.pi * timestep, k)
-        circuit.rx(np.pi * timestep, 0)
+        for k in range(self.n_meas):
+            beta = 3**k
+            circuit.rx(-beta / 2 * np.pi * timestep, k)
+        # circuit.rx(np.pi * timestep, 0)
 
         # reservoir
         circuit.append(self.U[reservoirnumber], range(self.n_qubits - 1))
@@ -79,9 +72,9 @@ class Stabilizer(Static):
         return decimal_integer
 
     @staticmethod
-    def indices_of_ones(input_list):
-        indices = [index for index, value in enumerate(input_list) if value == 1.0]
-        return indices
+    def indices_of_ones(input_list, n):
+        indices = [n-1-index for index, value in enumerate(input_list) if value == 1.0]
+        return indices # n-1-index because of Endian encoding of qiskit
 
     @staticmethod
     def get_parity_measurements(x):
@@ -95,21 +88,28 @@ class Stabilizer(Static):
         return np.remainder(G @ x, 2)
 
     @staticmethod
-    def build_decoder_map(n):
+    def build_decoder_map(n, standard):
         decoder = {}
-        for origin in list(product((0, 1), repeat=n)):
-            p = Stabilizer.get_parity_measurements(np.array(origin))
-            p = Stabilizer.binary_array_to_integer(p)
-            flips = Stabilizer.indices_of_ones(origin)
-            if p in decoder:
-                if len(decoder[p]) > len(flips):
-                    decoder[p] = flips
-            else:
+        if standard:
+            for origin in list(product((0, 1), repeat=n-1)):
+                p = np.array(origin)
+                p = Stabilizer.binary_array_to_integer(p)
+                flips = Stabilizer.indices_of_ones(origin, n-1)
                 decoder[p] = flips
+        else:
+            for origin in list(product((0, 1), repeat=n)):
+                p = Stabilizer.get_parity_measurements(np.array(origin))
+                p = Stabilizer.binary_array_to_integer(p)
+                flips = Stabilizer.indices_of_ones(origin, n)
+                if p in decoder:
+                    if len(decoder[p]) > len(flips):
+                        decoder[p] = flips
+                else:
+                    decoder[p] = flips
         return decoder
 
     @staticmethod
-    def get_stabilizer_circuits(n, m, random=True):
+    def get_stabilizer_circuits(n, m, random=True, standard=False):
         circuits = []
         if random:
             rs = random_clifford(n).stabilizer
@@ -126,6 +126,15 @@ class Stabilizer(Static):
                         circuit.cy(q[n], q[i - 1])
                     elif P[i] == "Z":
                         circuit.cz(q[n], q[i - 1])
+                circuit.h(n)
+                circuits.append(circuit)
+        elif standard:
+            for j in range(m):
+                q = QuantumRegister(n + 1)
+                circuit = QuantumCircuit(q)
+                circuit.reset([n])
+                circuit.h(n)
+                circuit.cz(q[n], q[j])
                 circuit.h(n)
                 circuits.append(circuit)
         else:

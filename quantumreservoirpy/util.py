@@ -12,6 +12,26 @@ def listify(elem):
         return [elem]
 
 
+def shift_down(arr, k):
+    t, o = arr.shape
+    result = np.zeros_like(arr)
+
+    for j in range(o):
+        result[k:, j] = arr[: t - k, j]
+
+    return result
+
+
+def create_shifted_array(a, k):
+    t, o = a.shape
+    result = np.zeros((t, k * o), dtype=a.dtype)
+
+    for i in range(k):
+        result[:, i * o : (i + 1) * o] = shift_down(a, i)
+
+    return result
+
+
 def memory_to_mean(memory):
     """Utility for analyzing qiskit.Result.get_memory() memory.
     Assumes the data is a list indexed by shots.
@@ -58,20 +78,50 @@ def get_weights(k, a, b):
     return (b - a) * np.random.random_sample(k) + a
 
 
-def randomIsing(n, topology, trottersteps, t):
+class IsingParams:
+    def __init__(
+        self,
+        topology=None,
+        trottersteps=None,
+        t=None,
+        Jx=None,
+        Jz=None,
+        hx=None,
+        hy=None,
+        hz=None,
+    ):
+        self.topology = topology
+        self.trottersteps = trottersteps
+        self.t = t
+        self.Jx = Jx
+        self.Jz = Jz
+        self.hx = hx
+        self.hy = hy
+        self.hz = hz
+
+
+def get_Ising_circuit(n, isingparams):
     q = QuantumRegister(n)
     circuit = QuantumCircuit(q)
+    for _ in range(isingparams.trottersteps):
+        for i in range(n):
+            circuit.rx(isingparams.t * isingparams.hx[i], i)
+            circuit.ry(isingparams.t * isingparams.hy[i], i)
+            circuit.rz(isingparams.t * isingparams.hz[i], i)
+        for i, e in enumerate(isingparams.topology):
+            circuit.rzz(isingparams.t * isingparams.Jx[i], e[0], e[1])
+            circuit.rxx(isingparams.t * isingparams.Jz[i], e[0], e[1])
+    return circuit
+
+
+def randomIsing(n, topology, trottersteps, t):
     Jx = get_weights(len(topology), -1, 1)
     Jz = get_weights(len(topology), -1, 1)
     hx = get_weights(n, -0.5, 0.5)
     hy = get_weights(n, -0.5, 0.5)
     hz = get_weights(n, -0.5, 0.5)
-    for _ in range(trottersteps):
-        for i in range(n):
-            circuit.rx(t * hx[i], i)
-            circuit.ry(t * hy[i], i)
-            circuit.rz(t * hz[i], i)
-        for i, e in enumerate(topology):
-            circuit.rzz(t * Jx[i], e[0], e[1])
-            circuit.rxx(t * Jz[i], e[0], e[1])
-    return circuit, Jx, Jz, hx, hy, hz
+    isingparams = IsingParams(topology, trottersteps, t, Jx, Jz, hx, hy, hz)
+
+    circuit = get_Ising_circuit(n, isingparams)
+
+    return circuit, isingparams

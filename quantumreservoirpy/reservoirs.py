@@ -6,7 +6,7 @@ from itertools import combinations
 from tqdm import tqdm
 
 from quantumreservoirpy.reservoirbase import QReservoir
-from quantumreservoirpy.util import memory_to_mean
+from quantumreservoirpy.util import memory_to_mean, create_shifted_array
 from quantumreservoirpy.statistic import Statistic
 
 
@@ -69,12 +69,16 @@ class Static(QReservoir):
             )
             self.shots_taken[nr] = shots_total
 
-        self.last_state = states[-1].ravel()
+        self.states = states
 
         return states
 
+    def state(self):
+        return self.states
+
     def predict(self, num_pred, model, from_series, **kwargs):
         kwargs["tqdm"] = True
+        timeplex = kwargs.pop("timeplex", 1)
         M = min(num_pred + len(from_series), self.memory)
 
         predictions = np.zeros(
@@ -94,10 +98,11 @@ class Static(QReservoir):
             curidx = len(from_series) + i
             states = self.run(predictions[:curidx][-M:], **kwargs)
 
-            pred_state = states[-1].reshape((1, -1))
-            predictions[curidx] = model.predict(pred_state)
+            if timeplex > 1:
+                states = create_shifted_array(states, timeplex)
+            predictions[curidx] = model.predict(states[-1].reshape((1, -1)))
 
-        return predictions, pred_state  # [-num_pred:]
+        return predictions  # [-num_pred:]
 
     def measurementStatistics(self, counts, num_timesteps):
         states_list = []

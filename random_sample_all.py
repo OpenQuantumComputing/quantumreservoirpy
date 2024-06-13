@@ -128,7 +128,7 @@ class Worker:
             states,
             self.resmodel.variances,
             self.resmodel.shots_taken,
-            self.resmodel.get_params(),
+            self.resmodel.isingparams,
         )
 
 
@@ -201,9 +201,11 @@ def main(
 
 if __name__ == "__main__":
     print("Creating time series...")
-    x2, y2 = get_time_series()
-    k = 20
-    ts = ((x2[::k] + 2) / 4)[200:]
+    #x2, y2 = get_time_series()
+    #k = 20
+    #ts = ((x2[::k] + 2) / 4)[200:]
+    ts = np.sin(np.linspace(0, 60*np.pi, 1000))
+
 
     tscv = TimeSeriesSplit()
     # Iterate through the splits and get the indices for the first fold
