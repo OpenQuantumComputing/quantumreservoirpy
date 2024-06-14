@@ -26,7 +26,7 @@ class Stabilizer(Static):
         if not isingparams:
             steps = 1
             dt = 1.645
-            top = list(combinations(range(n_qubits), 2))
+            top = limitrange(list(combinations(range(n_qubits), 2)))
             self.U = {}
             self.isingparams = {}
             for nr in range(1, num_reservoirs + 1):

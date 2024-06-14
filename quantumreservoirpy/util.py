@@ -113,6 +113,13 @@ def get_Ising_circuit(n, isingparams):
             circuit.rxx(isingparams.t * isingparams.Jz[i], e[0], e[1])
     return circuit
 
+def limitrange(topology, dist=2):
+    ltop = []
+    for tmp in topology:
+        if abs(tmp[0]-tmp[1])<=2:
+            ltop.append(tmp)
+    return ltop
+
 
 def randomIsing(n, topology, trottersteps, t):
     Jx = get_weights(len(topology), -1, 1)

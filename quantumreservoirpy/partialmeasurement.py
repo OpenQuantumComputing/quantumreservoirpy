@@ -3,7 +3,7 @@ import numpy as np
 
 import inspect
 
-from quantumreservoirpy.util import randomIsing, get_Ising_circuit
+from quantumreservoirpy.util import randomIsing, get_Ising_circuit, limitrange
 from quantumreservoirpy.reservoirs import Static
 
 
@@ -28,7 +28,7 @@ class PartialMeasurement(Static):
         if not isingparams:
             steps = 1
             dt = 1.645
-            top = list(combinations(range(n_qubits), 2))
+            top = limitrange(list(combinations(range(n_qubits), 2)))
             self.U = {}
             self.isingparams = {}
             for nr in range(1, num_reservoirs + 1):

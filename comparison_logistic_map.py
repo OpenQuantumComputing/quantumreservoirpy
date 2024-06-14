@@ -43,6 +43,7 @@ def main(num_qubits, num_meas, num_reservoirs, method, noise, timeplex=10, degre
 
     if not degree:
         degree = num_meas
+    degree = max(degree, 3)
 
     num_neurons=num_reservoirs*(2**num_meas-1)
 
