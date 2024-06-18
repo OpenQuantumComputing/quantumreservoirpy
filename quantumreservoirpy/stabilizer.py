@@ -17,16 +17,19 @@ class Stabilizer(Static):
         num_reservoirs=1,
         standard=False,
         isingparams=None,
+        decode=True,# danger zone: this is only for testing
     ) -> None:
         super().__init__(
             n_qubits + 1, memory, backend, degree=degree, num_reservoirs=num_reservoirs
         )
         self.n_meas = n_meas
+        self.decode = decode
 
         if not isingparams:
             steps = 1
             dt = 1.645
-            top = limitrange(list(combinations(range(n_qubits), 2)))
+            #top = limitrange(list(combinations(range(n_qubits), 2)))
+            top = list(combinations(range(n_qubits), 2))
             self.U = {}
             self.isingparams = {}
             for nr in range(1, num_reservoirs + 1):
@@ -63,7 +66,8 @@ class Stabilizer(Static):
             circuit.measure(circuit.qubits[self.n_qubits - 1], cr[j])
             circuit.barrier()
 
-        Stabilizer.apply_operations_for_integers(circuit, cr, self.decodermap)
+        if decode:
+            Stabilizer.apply_operations_for_integers(circuit, cr, self.decodermap)
 
     @staticmethod
     def binary_array_to_integer(binary_array):

@@ -18,17 +18,20 @@ class PartialMeasurement(Static):
         basis="X",
         num_reservoirs=1,
         isingparams=None,
+        decode=True,# danger zone: this is only for testing
     ) -> None:
         super().__init__(
             n_qubits, memory, backend, degree=degree, num_reservoirs=num_reservoirs
         )
         self.n_meas = n_meas
         self.basis = basis
+        self.decode = decode
 
         if not isingparams:
             steps = 1
             dt = 1.645
-            top = limitrange(list(combinations(range(n_qubits), 2)))
+            #top = limitrange(list(combinations(range(n_qubits), 2)))
+            top = list(combinations(range(n_qubits), 2))
             self.U = {}
             self.isingparams = {}
             for nr in range(1, num_reservoirs + 1):
@@ -88,4 +91,5 @@ class PartialMeasurement(Static):
             circuit.h(range(self.n_meas))
             circuit.sdg(range(self.n_meas))
         circuit.measure(range(self.n_meas))
-        circuit.reset(range(self.n_meas))
+        if decode:
+            circuit.reset(range(self.n_meas))
