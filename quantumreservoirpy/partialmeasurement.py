@@ -91,5 +91,5 @@ class PartialMeasurement(Static):
             circuit.h(range(self.n_meas))
             circuit.sdg(range(self.n_meas))
         circuit.measure(range(self.n_meas))
-        if decode:
+        if self.decode:
             circuit.reset(range(self.n_meas))

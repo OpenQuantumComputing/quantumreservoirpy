@@ -66,7 +66,7 @@ class Stabilizer(Static):
             circuit.measure(circuit.qubits[self.n_qubits - 1], cr[j])
             circuit.barrier()
 
-        if decode:
+        if self.decode:
             Stabilizer.apply_operations_for_integers(circuit, cr, self.decodermap)
 
     @staticmethod

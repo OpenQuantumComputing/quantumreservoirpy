@@ -55,13 +55,15 @@ def main(num_qubits, num_meas, num_reservoirs, method, noise, lentrain, decode, 
 
     if casename == "henon":
         ts = henon1d(200)
-    elif casename == "logistic"
+    elif casename == "logistic":
         ts=logistic_map(200, r=3.9, x0=0.5).flatten()
     #ts=narma(200).flatten()
 
     string_identifier="casename"+str(casename)+"_num_qubits"+str(num_qubits)+"_num_meas"+str(num_meas)
     string_identifier+="_degree"+str(degree)+"_num_reservoirs"+str(num_reservoirs)+"_timeplex"+str(timeplex)
     string_identifier+="_method"+str(method)+"_noise"+str(noise)
+    if not decode:
+        string_identifier+="_decodeFalse"
 
     print(string_identifier, " number of neurons/observables=",num_neurons )
 
