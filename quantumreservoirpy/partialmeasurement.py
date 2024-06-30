@@ -44,36 +44,6 @@ class PartialMeasurement(Static):
             for nr in range(1, num_reservoirs + 1):
                 self.U[nr] = get_Ising_circuit(n_qubits, isingparams[nr])
 
-    # def __reduce_ex__(self, protocol):
-    #    print("reduce_ex called")
-    #    current_frame = inspect.currentframe()
-    #    calling_frame = inspect.getouterframes(current_frame, 2)[1]
-    #    calling_function_name = calling_frame.function
-    #    print(f"This function was called by: {calling_function_name}")
-    #    return (
-    #        self.__class__,
-    #        (
-    #            self.n_qubits,
-    #            self.memory,
-    #            None,
-    #            self.degree,
-    #            self.num_reservoirs,
-    #        ),
-    #        {
-    #            "other_params": (
-    #                self.steps,
-    #                self.dt,
-    #                self.top,
-    #                self.basis,
-    #                self.Jx,
-    #                self.Jz,
-    #                self.hx,
-    #                self.hy,
-    #                self.hz,
-    #            )
-    #        },
-    #    )
-
     def during(self, circuit, timestep, reservoirnumber):
         # encode
         for k in range(self.n_meas):
