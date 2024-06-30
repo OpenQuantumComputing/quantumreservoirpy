@@ -1,7 +1,7 @@
 from setuptools import setup
 
 INSTALL_REQUIRES = [
-    "matplotlib>=3.7.1",
+    "matplotlib",
     "pylatexenc>=2.0",
     "qiskit>=0.43.1",
     "qiskit-aer>=0.12.0",
