@@ -58,8 +58,8 @@ def main(num_qubits, num_meas, num_reservoirs, method, noise, lentrain, decode, 
     elif casename == "logistic":
         ts=logistic_map(200, r=3.9, x0=0.5).flatten()
     elif casename == 'narma':
-        rng = np.random.default_rng(seed=2341)
-        u = rng.uniform(0, 0.5, size=(200 + order, 1))
+        u = np.loadtxt('u_driver.txt', dtype=float)
+        u = u[:(200+order)].reshape(-1, 1)
         ts = narma(n_timesteps=200, order=order, u=u).flatten()
 
     #ts=narma(200).flatten()
