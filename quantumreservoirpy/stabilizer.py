@@ -1,6 +1,8 @@
 from itertools import combinations, product
 import numpy as np
 from qiskit import QuantumCircuit, ClassicalRegister, QuantumRegister
+from qiskit.quantum_info import random_clifford, Clifford, Pauli
+from qiskit.circuit.library import PauliEvolutionGate
 
 from quantumreservoirpy.util import randomIsing, get_Ising_circuit
 from quantumreservoirpy.reservoirs import Static
@@ -10,7 +12,8 @@ class Stabilizer(Static):
     def __init__(
         self,
         n_qubits,
-        n_meas,
+        n_meas, #number of stabilizer generators
+        codestate_preparation_circ: Union[list(QuantumCircuit)|None] = None, #if None, will generate a random stabilizer code
         memory=np.inf,
         backend=None,
         degree=1,
@@ -42,8 +45,10 @@ class Stabilizer(Static):
             for nr in range(1, num_reservoirs + 1):
                 self.U[nr] = get_Ising_circuit(n_qubits, isingparams[nr])
 
-        self.cs = Stabilizer.get_stabilizer_circuits(n_qubits, n_meas, random=False, standard=standard)
-        self.decodermap = Stabilizer.build_decoder_map(n_meas + 1, standard=standard)
+        self.tableau = Stabilizer.generate_tableau(n_qubits, n_meas, codestate_preparation_circ)
+
+        # self.cs = Stabilizer.get_stabilizer_circuits(n_qubits, n_meas, self.tableau, random=False, standard=standard)
+        # self.decodermap = Stabilizer.build_decoder_map(n_meas + 1, standard=standard)
 
     def during(self, circuit, timestep, reservoirnumber):
         circuit.barrier()
@@ -51,23 +56,73 @@ class Stabilizer(Static):
         # encode
         for k in range(self.n_meas):
             beta = 3**k
-            circuit.rx(-beta / 2 * np.pi * timestep, k)
+            pauliop = Pauli(self.tableau["destabilizer"][k])
+            evo = PauliEvolutionGate(pauliop, -beta / 2 * np.pi * timestep)
+            circuit.append(evo, k)
+            # circuit.rx(-beta / 2 * np.pi * timestep, k) #encodes evolution of destabilizer for each bit of the syndrome measurement bitstring
         # circuit.rx(np.pi * timestep, 0)
 
         # reservoir
         circuit.append(self.U[reservoirnumber], range(self.n_qubits - 1))
 
         # decode
-        cr = ClassicalRegister(self.n_meas)
-        circuit.add_register(cr)
-        circuit.barrier()
-        for j in range(self.n_meas):
-            circuit.append(self.cs[j], range(self.n_qubits))
-            circuit.measure(circuit.qubits[self.n_qubits - 1], cr[j])
-            circuit.barrier()
+        # cr = ClassicalRegister(self.n_meas)
+        # circuit.add_register(cr)
+        # circuit.barrier()
+        # for j in range(self.n_meas):
+        #     circuit.append(self.cs[j], range(self.n_qubits))
+        #     circuit.measure(circuit.qubits[self.n_qubits - 1], cr[j])
+        #     circuit.barrier()
 
         if self.decode:
-            Stabilizer.apply_operations_for_integers(circuit, cr, self.decodermap)
+            # Stabilizer.apply_operations_for_integers(circuit, cr, self.decodermap)
+            Stabilizer.decoder(circuit, self.tableau)
+
+    @staticmethod
+    def generate_tableau(n_qubits: int, n_meas: int, codestate_preparation_circ: list(QuantumCircuit)):
+        """generates a tableau for a stabilizer code based on 2**k codestate preparation circuits"""
+
+        logical_qubits = n_qubits - n_meas #also called k
+
+        if codestate_preparation_circ==None: #generate random stabilizer code
+            tableau = random_clifford(n_qubits).to_dict()
+
+            #turn the last k stabilizers into logical Zs
+            # tableau["logical_z"] = tableau["stabilizer"][n_meas:] #these are just for QEC fun, not useful here
+            tableau["stabilizer"] = tableau["stabilizer"][:n_meas]
+
+            #turn the last k destabilizers into logical Xs
+            # tableau["logical_x"] = tableau["destabilizer"][n_meas:]
+            tableau["destabilizer"] = tableau["destabilizer"][:n_meas]
+
+        elif len(codestate_preparation_circ)!=2**logical_qubits:
+            print("Error : number of code state preparation circuits does not match the dimension of the codespace")
+            return
+
+        else:
+            tableau = Clifford(codestate_preparation_circ[0]).to_dict()
+            for circ in codestate_preparation_circ[1:]:
+                circ_tableau = Clifford(circ).to_dict()
+                to_pop = []
+
+                for i in range(len(tableau["stabilizer"])):
+                    if tableau["stabilizer"][i] not in circ_tableau["stabilizer"]:
+                        to_pop.append(i)
+
+                for i in to_pop:
+                    tableau["stabilizer"].pop(i)
+                    tableau["destabilizer"].pop(i)
+                # tableau["stabilizer"] = [stab for stab in tableau["stabilizer"] if stab in circ_tableau["stabilizer"]]
+                # tableau["destabilizer"] = [stab for stab in tableau["destabilizer"] if stab in circ_tableau["destabilizer"]]
+            print(tableau)
+            
+            #check the stabilizer has the right dimension
+            if len(tableau["stabilizer"])!=n_meas or len(tableau["destabilizer"])!=n_meas:
+                print("Error : something went wrong with tableau generation")
+                print(tableau)
+        
+        return tableau
+        
 
     @staticmethod
     def binary_array_to_integer(binary_array):
@@ -112,46 +167,46 @@ class Stabilizer(Static):
                     decoder[p] = flips
         return decoder
 
-    @staticmethod
-    def get_stabilizer_circuits(n, m, random=True, standard=False):
-        circuits = []
-        if random:
-            rs = random_clifford(n).stabilizer
+    # @staticmethod
+    # def get_stabilizer_circuits(n, m, tableau, random=True, standard=False):
+    #     circuits = []
+    #     # if random:
+    #         # rs = random_clifford(n).stabilizer
 
-            for P in sample(rs.to_labels(), m):
-                q = QuantumRegister(n + 1)
-                circuit = QuantumCircuit(q)
-                circuit.reset([n])
-                circuit.h(n)
-                for i in range(1, len(P)):
-                    if P[i] == "X":
-                        circuit.cx(q[n], q[i - 1])
-                    elif P[i] == "Y":
-                        circuit.cy(q[n], q[i - 1])
-                    elif P[i] == "Z":
-                        circuit.cz(q[n], q[i - 1])
-                circuit.h(n)
-                circuits.append(circuit)
-        elif standard:
-            for j in range(m):
-                q = QuantumRegister(n + 1)
-                circuit = QuantumCircuit(q)
-                circuit.reset([n])
-                circuit.h(n)
-                circuit.cz(q[n], q[j])
-                circuit.h(n)
-                circuits.append(circuit)
-        else:
-            for j in range(m):
-                q = QuantumRegister(n + 1)
-                circuit = QuantumCircuit(q)
-                circuit.reset([n])
-                circuit.h(n)
-                circuit.cz(q[n], q[j])
-                circuit.cz(q[n], q[j + 1])
-                circuit.h(n)
-                circuits.append(circuit)
-        return circuits
+    #     for P in tableau["stabilizers"]:
+    #         q = QuantumRegister(n + 1)
+    #         circuit = QuantumCircuit(q)
+    #         circuit.reset([n])
+    #         circuit.h(n)
+    #         for i in range(1, len(P)):
+    #             if P[i] == "X":
+    #                 circuit.cx(q[n], q[i - 1])
+    #             elif P[i] == "Y":
+    #                 circuit.cy(q[n], q[i - 1])
+    #             elif P[i] == "Z":
+    #                 circuit.cz(q[n], q[i - 1])
+    #         circuit.h(n)
+    #         circuits.append(circuit)
+    #     elif standard:
+    #         for j in range(m):
+    #             q = QuantumRegister(n + 1)
+    #             circuit = QuantumCircuit(q)
+    #             circuit.reset([n])
+    #             circuit.h(n)
+    #             circuit.cz(q[n], q[j])
+    #             circuit.h(n)
+    #             circuits.append(circuit)
+    #     else:
+    #         for j in range(m):
+    #             q = QuantumRegister(n + 1)
+    #             circuit = QuantumCircuit(q)
+    #             circuit.reset([n])
+    #             circuit.h(n)
+    #             circuit.cz(q[n], q[j])
+    #             circuit.cz(q[n], q[j + 1])
+    #             circuit.h(n)
+    #             circuits.append(circuit)
+    #     return circuits
 
     @staticmethod
     def apply_operations_for_integers(circ, c, integer_dict):
@@ -160,3 +215,54 @@ class Stabilizer(Static):
                 if value:
                     with case(key):
                         circ.x(value)
+
+    @staticmethod
+    def decoder(circuit: QuantumCircuit, code_tableau: dict):
+        """
+        Given a n-qubit state and a stabilizer code, detects errors and applies the operations
+        to project the state back to the codespace.
+
+        Args:
+            circuit : state preparation circuit
+            code_tableau : dictionary {"stabilizer": [], "destabilizer": []} each list has n-k elements
+
+        Returns:
+            circuit : state preparation circuit with syndrome measurement and error correction appended
+        """
+
+        n_qubits = circuit.num_qubits
+        n_meas = len(code_tableau["stabilizer"])
+
+        qr = circuit.qregs[0]
+        
+        cr = ClassicalRegister(n_meas)
+        ar = AncillaRegister(n_meas)
+        circuit.add_register(cr)
+        circuit.add_register(ar)
+        circuit.barrier()
+
+        #syndrome measurement operations
+        circuit.reset(ar)
+        circuit.h(ar)
+        
+        for j in range(n_meas):
+            P = code_tableau["stabilizer"][j]
+            for i in range(1, len(P)):
+                if P[i] == "X":
+                    circuit.cx(ar[j], qr[i - 1])
+                elif P[i] == "Y":
+                    circuit.cy(ar[j], qr[i - 1])
+                elif P[i] == "Z":
+                    circuit.cz(ar[j], qr[i - 1])
+
+        circuit.h(ar)
+
+        for j in range(n_meas):
+            circuit.measure(ar[j], cr[j])
+            circuit.barrier()
+
+        for j in range(n_meas):
+            with circuit.if_test((cr[j], 1)):
+                circuit.pauli(code_tableau["destabilizer"][j][1:], qr)
+        
+        return circuit
