@@ -79,7 +79,7 @@ class Stabilizer(Static):
             Stabilizer.decoder(circuit, self.tableau)
 
     @staticmethod
-    def generate_tableau(n_qubits: int, n_meas: int, codestate_preparation_circ: list(QuantumCircuit)):
+    def generate_tableau(n_qubits: int, n_meas: int, codestate_preparation_circ: Union[list(QuantumCircuit)|None]=None):
         """generates a tableau for a stabilizer code based on 2**k codestate preparation circuits"""
 
         logical_qubits = n_qubits - n_meas #also called k
