@@ -1,11 +1,13 @@
 from itertools import combinations, product
 import numpy as np
-from qiskit import QuantumCircuit, ClassicalRegister, QuantumRegister
+from qiskit import QuantumCircuit, ClassicalRegister, QuantumRegister, AncillaRegister
 from qiskit.quantum_info import random_clifford, Clifford, Pauli
 from qiskit.circuit.library import PauliEvolutionGate
 
 from quantumreservoirpy.util import randomIsing, get_Ising_circuit
 from quantumreservoirpy.reservoirs import Static
+
+from typing import Iterable
 
 
 class Stabilizer(Static):
@@ -13,7 +15,7 @@ class Stabilizer(Static):
         self,
         n_qubits,
         n_meas, #number of stabilizer generators
-        codestate_preparation_circ: Union[list(QuantumCircuit)|None] = None, #if None, will generate a random stabilizer code
+        codestate_preparation_circ: Iterable[QuantumCircuit]|None = None, #if None, will generate a random stabilizer code
         memory=np.inf,
         backend=None,
         degree=1,
@@ -50,6 +52,12 @@ class Stabilizer(Static):
         # self.cs = Stabilizer.get_stabilizer_circuits(n_qubits, n_meas, self.tableau, random=False, standard=standard)
         # self.decodermap = Stabilizer.build_decoder_map(n_meas + 1, standard=standard)
 
+
+    def before(self, circuit):
+        if self.decode:
+            circuit.add_register(ClassicalRegister(self.n_meas))
+            circuit.add_register(AncillaRegister(self.n_meas))
+
     def during(self, circuit, timestep, reservoirnumber):
         circuit.barrier()
 
@@ -58,12 +66,16 @@ class Stabilizer(Static):
             beta = 3**k
             pauliop = Pauli(self.tableau["destabilizer"][k])
             evo = PauliEvolutionGate(pauliop, -beta / 2 * np.pi * timestep)
-            circuit.append(evo, k)
+            circuit.append(evo, range(self.n_qubits - 1))
             # circuit.rx(-beta / 2 * np.pi * timestep, k) #encodes evolution of destabilizer for each bit of the syndrome measurement bitstring
         # circuit.rx(np.pi * timestep, 0)
+        # print("encode")
+        # print(circuit)
 
         # reservoir
         circuit.append(self.U[reservoirnumber], range(self.n_qubits - 1))
+        # print("reservoir")
+        # print(circuit)
 
         # decode
         # cr = ClassicalRegister(self.n_meas)
@@ -79,7 +91,7 @@ class Stabilizer(Static):
             Stabilizer.decoder(circuit, self.tableau)
 
     @staticmethod
-    def generate_tableau(n_qubits: int, n_meas: int, codestate_preparation_circ: Union[list(QuantumCircuit)|None]=None):
+    def generate_tableau(n_qubits: int, n_meas: int, codestate_preparation_circ: Iterable[QuantumCircuit]|None=None):
         """generates a tableau for a stabilizer code based on 2**k codestate preparation circuits"""
 
         logical_qubits = n_qubits - n_meas #also called k
@@ -233,12 +245,10 @@ class Stabilizer(Static):
         n_qubits = circuit.num_qubits
         n_meas = len(code_tableau["stabilizer"])
 
-        qr = circuit.qregs[0]
-        
-        cr = ClassicalRegister(n_meas)
-        ar = AncillaRegister(n_meas)
-        circuit.add_register(cr)
-        circuit.add_register(ar)
+        qr = circuit.qregs[0]        
+        cr = circuit.cregs[0]
+        ar = circuit.ancillas
+
         circuit.barrier()
 
         #syndrome measurement operations
@@ -263,6 +273,6 @@ class Stabilizer(Static):
 
         for j in range(n_meas):
             with circuit.if_test((cr[j], 1)):
-                circuit.pauli(code_tableau["destabilizer"][j][1:], qr)
+                circuit.pauli(code_tableau["destabilizer"][j][1:], qr[:-1])
         
         return circuit
