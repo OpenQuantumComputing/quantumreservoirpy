@@ -55,7 +55,7 @@ class Stabilizer(Static):
 
     def before(self, circuit):
         if self.decode:
-            circuit.add_register(ClassicalRegister(self.n_meas))
+            # circuit.add_register(ClassicalRegister(self.n_meas))
             circuit.add_register(AncillaRegister(self.n_meas))
 
     def during(self, circuit, timestep, reservoirnumber):
@@ -78,8 +78,8 @@ class Stabilizer(Static):
         # print(circuit)
 
         # decode
-        # cr = ClassicalRegister(self.n_meas)
-        # circuit.add_register(cr)
+        cr = ClassicalRegister(self.n_meas)
+        circuit.add_register(cr)
         # circuit.barrier()
         # for j in range(self.n_meas):
         #     circuit.append(self.cs[j], range(self.n_qubits))
@@ -88,8 +88,10 @@ class Stabilizer(Static):
 
         if self.decode:
             # Stabilizer.apply_operations_for_integers(circuit, cr, self.decodermap)
+            # ar = circuit.ancillas
+            # circuit.reset(ar)
             Stabilizer.decoder(circuit, self.tableau)
-
+            
     @staticmethod
     def generate_tableau(n_qubits: int, n_meas: int, codestate_preparation_circ: Iterable[QuantumCircuit]|None=None):
         """generates a tableau for a stabilizer code based on 2**k codestate preparation circuits"""
@@ -246,7 +248,7 @@ class Stabilizer(Static):
         n_meas = len(code_tableau["stabilizer"])
 
         qr = circuit.qregs[0]        
-        cr = circuit.cregs[0]
+        cr = circuit.cregs[-1]
         ar = circuit.ancillas
 
         circuit.barrier()
