@@ -15,6 +15,7 @@ class Stabilizer(Static):
         self,
         n_qubits,
         n_meas, #number of stabilizer generators
+        tableau: dict|None=None, #if specified, overrides the tableau generation
         codestate_preparation_circ: Iterable[QuantumCircuit]|None = None, #if None, will generate a random stabilizer code
         memory=np.inf,
         backend=None,
@@ -47,7 +48,12 @@ class Stabilizer(Static):
             for nr in range(1, num_reservoirs + 1):
                 self.U[nr] = get_Ising_circuit(n_qubits, isingparams[nr])
 
-        self.tableau = Stabilizer.generate_tableau(n_qubits, n_meas, codestate_preparation_circ)
+        if tableau != None:
+            if len(tableau["stabilizer"])!=n_meas or len(tableau["destabilizer"])!=n_meas:
+                raise Exception("Error: the number of entries of the tableau does not match the dimension of the stabilizer")
+            self.tableau = tableau
+        else:
+            self.tableau = Stabilizer.generate_tableau(n_qubits, n_meas, codestate_preparation_circ)
 
         # self.cs = Stabilizer.get_stabilizer_circuits(n_qubits, n_meas, self.tableau, random=False, standard=standard)
         # self.decodermap = Stabilizer.build_decoder_map(n_meas + 1, standard=standard)
