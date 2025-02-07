@@ -90,7 +90,7 @@ def main(num_qubits, num_meas, num_reservoirs, method, noise, lentrain, decode, 
     with open("isingparams_"+"num_qubits"+str(num_qubits)+"_num_reservoirs"+str(num_reservoirs)+".pickle","rb") as f:
         isingparams = pickle.load(f)
 
-    with open("tableau_"+"num_qubits"+str(num_qubits)+"_num_measurements"+str(num_measurements)+"_num_tableaus"+str(num_tableaus)+".pickle","rb") as f:
+    with open("tableau_"+"num_qubits"+str(num_qubits)+"_num_measurements"+str(num_meas)+"_num_tableaus100.pickle","rb") as f:
         tableau = pickle.load(f)
 
     print(tableau[tableaunr])
