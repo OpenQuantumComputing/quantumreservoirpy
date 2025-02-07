@@ -101,7 +101,7 @@ def main(num_qubits, num_meas, num_reservoirs, method, noise, lentrain, decode, 
         res = PartialMeasurement(num_qubits, num_meas, backend = AerSimulator(noise_model=noise_model),\
                                  degree=degree, num_reservoirs=num_reservoirs, isingparams=isingparams,decode=decode)
     elif method == "quantum_stab":
-        res = Stabilizer(num_qubits, num_meas, backend = AerSimulator(noise_model=noise_model),\
+        res = Stabilizer(num_qubits, num_meas, backend = AerSimulator(noise_model=noise_model, method="automatic", device="GPU"),\
                          degree=degree, num_reservoirs=num_reservoirs, isingparams=isingparams,decode=decode, tableau = tableau[tableaunr])
 
     tscv = TimeSeriesSplit()
