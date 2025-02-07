@@ -169,7 +169,7 @@ if __name__ == "__main__":
     lentrain = int(sys.argv[6])
     decode = bool(int(sys.argv[7]))
     casename = str(sys.argv[8])
-    tableaunr = str(sys.argv[9])
+    tableaunr = int(sys.argv[9])
 
     print("Running:", num_qubits, num_meas, num_reservoirs, method, noise, lentrain, decode, casename, tableaunr)
     main(num_qubits, num_meas, num_reservoirs, method, noise, lentrain, decode, casename, tableaunr)
