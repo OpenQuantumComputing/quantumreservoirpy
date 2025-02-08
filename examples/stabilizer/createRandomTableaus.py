@@ -10,4 +10,6 @@ def createanddumptableaus(num_qubits, num_measurements):
         pickle.dump(tableaus, f)
 
 createanddumptableaus(5,3)
+createanddumptableaus(4,3)
+createanddumptableaus(3,2)
 
