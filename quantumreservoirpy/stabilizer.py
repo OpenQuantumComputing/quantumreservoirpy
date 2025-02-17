@@ -222,6 +222,8 @@ class Stabilizer(Static):
 
         for j in range(n_meas):
             P = code_tableau["stabilizer"][j]
+            if P[0] == -1:
+                circuit.z(ar[j])
             for i in range(1, len(P)):
                 if P[i] == "X":
                     circuit.cx(ar[j], qr[i - 1])
