@@ -123,7 +123,7 @@ def main(num_qubits, num_meas, num_reservoirs, method, noise, lentrain, decode, 
             states = res.run(X_train.reshape(-1, 1), reset=True)
             linreg, X, y = fit_model(linreg, states, X_train, WARMUP, 1)
         else:
-            states = res.run(timeseries=X_train, shots=1e3, precision=1e-2)
+            states = res.run(timeseries=X_train, shots=1e3, precision=1e-2, transpile=False)
             linreg, X, y = fit_model(linreg, states, X_train, WARMUP, timeplex)
 
         score = linreg.score(X, y)
@@ -148,7 +148,7 @@ def main(num_qubits, num_meas, num_reservoirs, method, noise, lentrain, decode, 
                     states = res.run(prediction[-1])
                 tmp = run_prediction(linreg, states, 1)
             else:
-                states = res.run(prediction[-2*int(timeplex):], shots=1e3, precision=1e-2)
+                states = res.run(prediction[-2*int(timeplex):], shots=1e3, precision=1e-2,transpile=False)
                 tmp = run_prediction(linreg, states, timeplex)
             
             prediction = np.append(prediction,tmp)
