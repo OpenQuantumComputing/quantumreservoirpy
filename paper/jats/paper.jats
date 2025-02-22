@@ -1,0 +1,634 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE article PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Publishing DTD v1.2 20190208//EN"
+                  "JATS-publishing1.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" dtd-version="1.2" article-type="other">
+<front>
+<journal-meta>
+<journal-id></journal-id>
+<journal-title-group>
+<journal-title>Journal of Open Source Software</journal-title>
+<abbrev-journal-title>JOSS</abbrev-journal-title>
+</journal-title-group>
+<issn publication-format="electronic">2475-9066</issn>
+<publisher>
+<publisher-name>Open Journals</publisher-name>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="publisher-id">0</article-id>
+<article-id pub-id-type="doi">N/A</article-id>
+<title-group>
+<article-title>QuantumReservoirPy: A Software Package for Time Series
+Prediction</article-title>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author" equal-contrib="yes">
+<name>
+<surname>Miao</surname>
+<given-names>Stanley</given-names>
+</name>
+<xref ref-type="aff" rid="aff-1"/>
+</contrib>
+<contrib contrib-type="author" equal-contrib="yes">
+<contrib-id contrib-id-type="orcid">https://orcid.org/0009-0009-9807-4975</contrib-id>
+<name>
+<surname>Kulseng</surname>
+<given-names>Ola Tangen</given-names>
+</name>
+<xref ref-type="aff" rid="aff-2"/>
+</contrib>
+<contrib contrib-type="author" equal-contrib="yes" corresp="yes">
+<name>
+<surname>Stasik</surname>
+<given-names>Alexander</given-names>
+</name>
+<xref ref-type="aff" rid="aff-3"/>
+<xref ref-type="corresp" rid="cor-1"><sup>*</sup></xref>
+</contrib>
+<contrib contrib-type="author" equal-contrib="yes">
+<name>
+<surname>Fuchs</surname>
+<given-names>Franz G.</given-names>
+</name>
+<xref ref-type="aff" rid="aff-3"/>
+</contrib>
+<aff id="aff-1">
+<institution-wrap>
+<institution>David R. Cheriton School of Computer Science, University of
+Waterloo, Canada</institution>
+</institution-wrap>
+</aff>
+<aff id="aff-2">
+<institution-wrap>
+<institution>Department of Physics, Norwegian University of Science and
+Technology (NTNU), Norway</institution>
+</institution-wrap>
+</aff>
+<aff id="aff-3">
+<institution-wrap>
+<institution>Department of Mathematics and Cybernetics, SINTEF Digital,
+Norway</institution>
+</institution-wrap>
+</aff>
+</contrib-group>
+<author-notes>
+<corresp id="cor-1">* E-mail: <email></email></corresp>
+</author-notes>
+<pub-date date-type="pub" publication-format="electronic" iso-8601-date="2025-02-22">
+<day>22</day>
+<month>2</month>
+<year>2025</year>
+</pub-date>
+<volume>¿VOL?</volume>
+<issue>¿ISSUE?</issue>
+<fpage>¿PAGE?</fpage>
+<permissions>
+<copyright-statement>Authors of papers retain copyright and release the
+work under a Creative Commons Attribution 4.0 International License (CC
+BY 4.0)</copyright-statement>
+<copyright-year>1970</copyright-year>
+<copyright-holder>The article authors</copyright-holder>
+<license license-type="open-access" xlink:href="https://creativecommons.org/licenses/by/4.0/">
+<license-p>Authors of papers retain copyright and release the work under
+a Creative Commons Attribution 4.0 International License (CC BY
+4.0)</license-p>
+</license>
+</permissions>
+<kwd-group kwd-group-type="author">
+<kwd>Python</kwd>
+<kwd>physics</kwd>
+<kwd>quantum information</kwd>
+<kwd>auantum circuits</kwd>
+<kwd>qiskit</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="summary">
+  <title>Summary</title>
+  <p>Reservoir computing on quantum computers have recently emerged as a
+  potential resource for time series prediction, owing to their inherent
+  complex dynamics. To advance Quantum Reservoir Computing (QRC)
+  research, we have developed the Python package
+  <ext-link ext-link-type="uri" xlink:href="https://github.com/OpenQuantumComputing/quantumreservoirpy"><monospace>QuantumReservoirPy</monospace></ext-link>,
+  which fascilitates QRC using quantum circuits as reservoirs.</p>
+  <p>The package is designed to be easy to use, while staying completely
+  customizable. The resulting interface, similar to that of
+  <ext-link ext-link-type="uri" xlink:href="https://github.com/reservoirpy/reservoirpy">reservoirpy</ext-link>
+  (<xref alt="Trouvain et al., 2020" rid="ref-trouvain20" ref-type="bibr">Trouvain
+  et al., 2020</xref>), simplifies the development of quantum
+  reservoirs, and provides logical methods of comparison between
+  reservoir architectures.</p>
+</sec>
+<sec id="statement-of-need">
+  <title>Statement of need</title>
+  <p>Reservoir computing (RC) is a paradigm in machine learning for time
+  series prediction. With recent developments, it has shown a promising
+  advantage in efficiency due to the relative simplicity of the
+  associated training process over conventional neural network methods
+  (<xref alt="Tanaka et al., 2019" rid="ref-tanaka2019" ref-type="bibr">Tanaka
+  et al., 2019</xref>). In reservoir computing, a dynamical system
+  composed of hidden functional representations with non-linear state
+  transitions is chosen as a reservoir. Input data from a time series is
+  sequentially encoded and fed into the reservoir. The hidden parameters
+  of the reservoir undergo a non-linear evolution dependent on the
+  stored state and the encoded information fed into the system. Features
+  are subsequently decoded from a readout of certain parameters of the
+  reservoir, which is used to train a simple linear model for the
+  desired time series prediction output, see
+  <xref alt="[fig1]" rid="fig1">[fig1]</xref> for an illustration.</p>
+  <fig>
+    <caption><p>A quantum reservoir system consists of a learning task,
+    an en- and de-coder (red) and the dynamic system itself (green). In
+    standard RC the machine learning part is linear
+    regression.<styled-content id="fig1"></styled-content></p></caption>
+    <graphic mimetype="application" mime-subtype="pdf" xlink:href="fig1.pdf" />
+  </fig>
+  <p>The selected reservoir must incorporate non-linear state
+  transitions within the limitations of a fixed structure. A reservoir
+  can be virtual, such as a sparsely-connected recurrent neural network
+  with random fixed weights, termed as an echo state network
+  (<xref alt="Jaeger &amp; Haas, 2004" rid="ref-jaeger04" ref-type="bibr">Jaeger
+  &amp; Haas, 2004</xref>) or even physical, such as a bucket of water
+  (<xref alt="Fernando &amp; Sojakka, 2003" rid="ref-fernando03" ref-type="bibr">Fernando
+  &amp; Sojakka, 2003</xref>).</p>
+  <p>QRC is a proposed method of RC utilizing quantum circuits as
+  reservoirs. Multi-qubit systems with the capability of quantum
+  entanglement provide compelling non-linear dynamics that match the
+  requirements for a feasible reservoir. Furthermore, the
+  exponentially-scaling Hilbert space of large multi-qubit systems
+  support the efficiency and state-storage goals of RC. As a result,
+  quantum computers have been touted as a viable dynamical system to
+  produce the intended effects of reservoir computing.</p>
+  <p>In QRC, data is encoded by operating on one or more qubit(s) to
+  reach a desired state. To obtain the desired complex non-linearity in
+  a quantum system as a reservoir, entangling unitary operations are
+  performed over the system. The readout is measured from one or more
+  qubit(s) of the quantum state, which can be achieved through partial
+  or full measurement over the system. Since quantum measurement results
+  in a collapse to the measured state, repetitive measurements over
+  identical systems are used to sample from the distribution of the
+  unknown quantum state, which is then post-processed to obtain a
+  decoded measurement for the subsequent linear model. Furthermore, this
+  collapse results in a loss of retained information and entanglement in
+  the system. Where only a partial measurement is taken (as in
+  (<xref alt="Yasuda et al., 2023" rid="ref-yasuda23" ref-type="bibr">Yasuda
+  et al., 2023</xref>)), this may have a desired effect of a slow leak
+  of information driven from earlier input. When measurement is taken
+  over the full system, the system may instead be restored through
+  re-preparation of the pre-existing system, achieved in
+  (<xref alt="Suzuki et al., 2022" rid="ref-suzuki22" ref-type="bibr">Suzuki
+  et al., 2022</xref>) and through the restarting and rewinding
+  protocols in
+  (<xref alt="Mujal et al., 2023" rid="ref-mujal23" ref-type="bibr">Mujal
+  et al., 2023</xref>).</p>
+  <p>Existing implementations of QRC have used proprietary realizations
+  on simulated and actual quantum computers. The lack of a shared
+  structure between implementations has resulted in a disconnect with
+  comparing reservoir architectures. In addition, individual
+  implementations require a certain amount of redundant procedure prior
+  to the involvement of specific concepts.</p>
+  <p>We observe that there is a need for a common framework for the
+  implementation of QRC. As such, we have developed
+  <monospace>QuantumReservoirPy</monospace> to solve the presented
+  issues in current QRC research.
+  <monospace>QuantumReservoirPy</monospace> is designed to handle every
+  step of the reservoir computing pipeline, in addition to the pre- and
+  post-processing necessary in the quantum case. In providing this
+  software package, we hope to facilitate logical methods of comparison
+  in QRC architecture and enable a simplified process of creating a
+  custom reservoir from off-the-shelf libraries with minimal overhead
+  requirements to begin development.</p>
+  <fig>
+    <caption><p>Quantum circuit construction may be customized through
+    the <monospace>before</monospace>, <monospace>during</monospace>,
+    and <monospace>after</monospace> methods and a timeseries processed
+    with the <monospace>run</monospace> and
+    <monospace>predict</monospace>
+    methods.<styled-content id="fig2"></styled-content></p></caption>
+    <graphic mimetype="application" mime-subtype="pdf" xlink:href="fig2.pdf" />
+  </fig>
+</sec>
+<sec id="design-and-implementation">
+  <title>Design and implementation</title>
+  <p>We intend <monospace>QuantumReservoirPy</monospace> to provide
+  flexibility to all possible designs of quantum reservoirs, with full
+  control over pre-processing, input, quantum circuit operations,
+  measurement, and post-processing. In particular, we take inspiration
+  from the simple and flexible structure provided by the ReservoirPy
+  software package
+  <ext-link ext-link-type="uri" xlink:href="https://github.com/reservoirpy/reservoirpy">reservoirpy</ext-link>
+  (<xref alt="Trouvain et al., 2020" rid="ref-trouvain20" ref-type="bibr">Trouvain
+  et al., 2020</xref>).</p>
+  <p>Unlike the parameterized single-class structure of ReservoirPy,
+  <monospace>QuantumReservoirPy</monospace> uses the abstract
+  class-based structure of <xref alt="[fig2]" rid="fig2">[fig2]</xref>
+  as the former would be restrictive in the full customization of QRC.
+  In particular, quantum circuit operations and measurement may be
+  conducted in differing arrangements. With an abstract class, we allow
+  the user to define the functionality of the quantum circuit, which
+  provides full flexibility over all existing implementations of QRC.
+  This structure also implicitly provides access to the full Qiskit
+  <ext-link ext-link-type="uri" xlink:href="https://docs.quantum.ibm.com/api/qiskit/circuit_library">circuit
+  library</ext-link>.</p>
+  <sec id="construction-and-processing">
+    <title>Construction and processing</title>
+    <p>The construction methods in
+    <monospace>QuantumReservoirPy</monospace> serve as the sequential
+    operations performed on the quantum system. The operations in the
+    <monospace>before</monospace> method prepares the qubits, which may
+    include initialization to a default, initial, or previously saved
+    state. The <monospace>during</monospace> method provides the
+    operations that are subsequently applied for each step in the
+    timeseries. This may include (but is not limited to) measurement,
+    re-initialization, and entangling operations. Finally, the
+    operations in the <monospace>predict</monospace> method are applied
+    once following the processing of the entire timeseries, which may
+    include the transformation of final qubit states and measurement.
+    <xref alt="[fig3]" rid="fig3">[fig3]</xref>a demonstrates the
+    aforementioned arrangement, which is implemented as a hidden
+    intermediary process in a <monospace>QuantumReservoirPy</monospace>
+    quantum reservoir.</p>
+    <fig>
+      <caption><p>The intended functionality of the
+      <monospace>run</monospace> and <monospace>predict</monospace>
+      method. The observed input sequence is
+      <inline-formula><alternatives>
+      <tex-math><![CDATA[\{x_t\}]]></tex-math>
+      <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mo stretchy="false" form="prefix">{</mml:mo><mml:msub><mml:mi>x</mml:mi><mml:mi>t</mml:mi></mml:msub><mml:mo stretchy="false" form="postfix">}</mml:mo></mml:mrow></mml:math></alternatives></inline-formula>
+      and the target sequence <inline-formula><alternatives>
+      <tex-math><![CDATA[\{y_t\}]]></tex-math>
+      <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mo stretchy="false" form="prefix">{</mml:mo><mml:msub><mml:mi>y</mml:mi><mml:mi>t</mml:mi></mml:msub><mml:mo stretchy="false" form="postfix">}</mml:mo></mml:mrow></mml:math></alternatives></inline-formula>.
+      The reservoir <inline-formula><alternatives>
+      <tex-math><![CDATA[f]]></tex-math>
+      <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mi>f</mml:mi></mml:math></alternatives></inline-formula>
+      performs an evolution in
+      time.<styled-content id="fig3"></styled-content></p></caption>
+      <graphic mimetype="application" mime-subtype="pdf" xlink:href="fig3.pdf" />
+    </fig>
+    <p>The processing methods serve as functions acting on the quantum
+    reservoir itself. The <monospace>run</monospace> method is used to
+    process training data by taking a timeseries as input and returning
+    the transformed data after being processed by the quantum reservoir.
+    This is done using the hidden <monospace>circuit</monospace>
+    interface as presented in
+    <xref alt="[fig3]" rid="fig3">[fig3]</xref>a, where data encoding
+    and decoding follow the implementation of the custom construction
+    methods. Depending on the realization of QRC, such as averaging over
+    multi-shot data, additional post-processing is included in the
+    <monospace>run</monospace> method to achieve the desired output. The
+    transformed data from the <monospace>run</monospace> method serves
+    as training data for a simple machine learning model.
+    <xref alt="[fig3]" rid="fig3">[fig3]</xref>b provides a
+    visualization of the <monospace>run</monospace> method.</p>
+    <p>The <monospace>predict</monospace> method functions as a complete
+    forecasting process involving the same hidden
+    <monospace>circuit</monospace> interface, encoding, decoding, and
+    post-processing. Additionally, a trained simple machine learning
+    model is used to predict the next step in the timeseries from the
+    transformed and post-processed data. The resulting prediction is
+    then fed in as input for the following prediction, which occurs as
+    an iterative process until the specified number of forecasting steps
+    is reached. At this point, the <monospace>predict</monospace> method
+    returns the sequence of predictions from each iteration.
+    <xref alt="[fig3]" rid="fig3">[fig3]</xref>c provides a
+    visualization of the <monospace>predict</monospace> method.</p>
+  </sec>
+</sec>
+<sec id="reservoirs-and-example-usage">
+  <title>Reservoirs and example usage</title>
+  <p><monospace>QuantumReservoirPy</monospace> provides two prepackaged
+  reservoirs that implement the processing methods
+  <monospace>run</monospace> and <monospace>predict</monospace>
+  according to the structure presented above. These reservoirs use
+  common QRC schemes as a basis to get started with the software package
+  or restrict customization to circuit construction. As such, the
+  construction of a reservoir using either of these schemes only
+  requires user implementation of the sequential circuit methods
+  <monospace>before</monospace>, <monospace>during</monospace>, and
+  <monospace>after</monospace>.</p>
+  <sec id="static-reservoirs">
+    <title>Static Reservoirs</title>
+    <p>The <monospace>Static</monospace> abstract reservoir class is
+    structured to run multi-shot processing according to a
+    repeated-measurement process. A single circuit is created according
+    to the circuit construction methods and the timeseries parameter.
+    Measurement is expected in the <monospace>during</monospace>
+    function to generate the transformed reservoir output using the
+    single circuit. This circuit is sent to the specified Qiskit backend
+    and is run with the remaining parameters provided to the processing
+    methods. The resulting measurement data is post-processed by taking
+    the average over all shots before it is returned to the user as
+    decoded reservoir output.</p>
+    <p>An example of a <monospace>Static</monospace> quantum reservoir
+    is the following.</p>
+    <code language="python">class QuantumReservoir(Static):
+    def before(self, circuit):
+        circuit.h(circuit.qubits)
+
+    def during(self, circuit, timestep):
+        circuit.initialize(encoder[timestep], [0, 1])
+        circuit.append(operator, circuit.qubits)
+        circuit.measure([0, 1])
+    </code>
+    <p>In the example, the timestep passed to the
+    <monospace>during</monospace> method is encoded in the circuit
+    according to an <monospace>encoder</monospace>. Measurement is also
+    taken in the <monospace>during</monospace> method to provide
+    sequential data using a single circuit for the entire timeseries.
+    The <monospace>after</monospace> method is not necessary for this
+    scheme and is left as the inherited empty method by default.</p>
+  </sec>
+  <sec id="incremental-reservoirs">
+    <title>Incremental Reservoirs</title>
+    <p>The <monospace>Incremental</monospace> abstract reservoir class
+    processes data using multiple circuits over a moving substring of
+    the timeseries. Circuits of length at most the specified
+    <monospace>memory</monospace> parameter are created for step-by-step
+    processing of the timeseries according to the circuit construction
+    methods. Each circuit with a fixed-length memory is sent to the
+    Qiskit backend to be run with the remaining parameters to the
+    processing methods. Using this scheme, measurements taken in the
+    <monospace>after</monospace> method can be post-processed to provide
+    the user with the desired reservoir output.</p>
+    <p>An example of an <monospace>Incremental</monospace> quantum
+    reservoir is the following.</p>
+    <code language="python">class QuantumReservoir(Incremental):
+    def before(self, circuit):
+        circuit.h(circuit.qubits)
+
+    def during(self, circuit, timestep):
+        circuit.initialize(encoder[timestep], [0, 1])
+        circuit.append(operator, circuit.qubits)
+
+    def after(self, circuit):
+        circuit.measure_all()
+    </code>
+    <p>In the example, the <monospace>during</monospace> method is still
+    used to encode the current timestep in the timeseries, but
+    measurement is instead taken in the <monospace>after</monospace>
+    method. Since a circuit is created for each timestep, the combined
+    measurements produce the desired sequential data.</p>
+  </sec>
+  <sec id="custom-reservoirs">
+    <title>Custom Reservoirs</title>
+    <p>Custom reservoirs provide full flexibility over processing data
+    in a quantum reservoir. A custom reservoir can be created by
+    implementing the <monospace>QReservoir</monospace> abstract class.
+    Unlike the prepackaged reservoirs, a custom reservoir must implement
+    the <monospace>run</monospace> and <monospace>predict</monospace>
+    methods, in addition to the circuit construction methods.</p>
+  </sec>
+  <sec id="backend">
+    <title>Backend</title>
+    <p>When a quantum reservoir is instantiated, it requires a Qiskit
+    backend. If no backend is specified, then
+    <monospace>AerSimulator</monospace> is used by default. The backend
+    must support the circuit operations specified in the circuit
+    construction methods. When creating a custom reservoir, the
+    <monospace>run</monospace> and <monospace>predict</monospace>
+    methods should run the quantum reservoir on
+    <monospace>self.backend</monospace> attribute.</p>
+    <p>As an example, instantiation of a quantum reservoir using the
+    simulator backend <monospace>FakeTorontoV2</monospace> is as
+    follows.</p>
+    <code language="python">from qiskit.providers.fake_provider import FakeTorontoV2
+
+backend = FakeTorontoV2()
+reservoir = QuantumReservoir(n_qubits=4, backend=backend)</code>
+    <p>Once a quantum reservoir has been instantiated, training data for
+    the trainable model is produced by using the
+    <monospace>run</monospace> method on the timeseries. The trained
+    model can then be passed to the <monospace>predict</monospace>
+    method to make predictions:</p>
+    <code language="python">output = reservoir.run(timeseries=timeseries, shots=10000)
+# ...(model training)...
+predictions = reservoir.predict(num_pred=10, model=model, from_series=timeseries, shots=10000)</code>
+    <p>Model training of a scikit-learn estimator between the
+    <monospace>run</monospace> and <monospace>predict</monospace>
+    methods is not shown. The <monospace>shots</monospace> parameter is
+    directly passed to the Qiskit backend when using a prepackaged
+    reservoir.</p>
+  </sec>
+</sec>
+<sec id="package-details">
+  <title>Package Details</title>
+  <sec id="dependencies">
+    <title>Dependencies</title>
+    <p>The three main dependencies of
+    <monospace>QuantumReservoirPy</monospace> are numpy, qiskit, and
+    scikit-learn. We strive for
+    <monospace>QuantumReservoirPy</monospace> to support compatibility
+    with existing reservoir computing and quantum computing
+    workflows.</p>
+    <p><monospace>QuantumReservoirPy</monospace> uses NumPy as a core
+    dependency. Allowed versions of NumPy ensure compatibility with
+    classical ReservoirPy to facilitate comparison between classical and
+    quantum reservoir architectures. An example is provided
+    <ext-link ext-link-type="uri" xlink:href="examples\static">here</ext-link>.</p>
+    <p>Much of existing research in QRC is performed on IBM devices and
+    simulators (see
+    (<xref alt="Suzuki et al., 2022" rid="ref-suzuki22" ref-type="bibr">Suzuki
+    et al., 2022</xref>;
+    <xref alt="Yasuda et al., 2023" rid="ref-yasuda23" ref-type="bibr">Yasuda
+    et al., 2023</xref>)), programmed through the Qiskit software
+    package. To minimize disruption in current workflows,
+    <monospace>QuantumReservoirPy</monospace> is built as a package to
+    interact with Qiskit circuits and backends. It is expected that the
+    user also use Qiskit in the customization of reservoir architecture
+    when working with <monospace>QuantumReservoirPy</monospace>.</p>
+    <p>The model used by the <monospace>predict</monospace> function is
+    expected to be a scikit-learn estimator. Likewise to our dependency
+    on Qiskit, this allows for complete customization over the choice of
+    model and faster adoption of
+    <monospace>QuantumReservoirPy</monospace> from a simple package
+    structure.</p>
+  </sec>
+  <sec id="distribution">
+    <title>Distribution</title>
+    <p>The software package is developed and maintained through a public
+    GitHub repository provided through the
+    <monospace>OpenQuantumComputing</monospace> organization. The
+    <monospace>main</monospace> branch of this repository serves as the
+    latest stable version of <monospace>QuantumReservoirPy</monospace>.
+    Installation through cloning this repository is intended for
+    development purposes.</p>
+    <p>Official releases of the software package are published through
+    the Python Package Index (PyPI) under the
+    <monospace>quantumreservoirpy</monospace> name. Installation through
+    PyPI is the suggested method of installation for general-purpose
+    use.</p>
+    <p><monospace>QuantumReservoirPy</monospace> is licensed under the
+    GNU General Public License v3.0.
+    <monospace>QuantumReservoirPy</monospace> also includes derivative
+    work of Qiskit, which is licensed by IBM under the Apache License,
+    Version 2.0.</p>
+  </sec>
+  <sec id="documentation">
+    <title>Documentation</title>
+    <p>Documentation is mainly provided online in the form of a user
+    guide and API reference. The user guide includes steps for
+    installation and getting started with a simple quantum reservoir.
+    Examples are also provided for further guidance. The API reference
+    outlines the intended classes and functions exposed by the software
+    package. A brief overview of the software package is also included
+    as a <monospace>README.md</monospace> file at the top level of the
+    public GitHub repository.</p>
+  </sec>
+  <sec id="further-development">
+    <title>Further Development</title>
+    <p>The authors continue to support and maintain the project. Users
+    may report package issues and desired features by opening an issue
+    on the public GitHub repository or contacting the authors by email.
+    Additional opportunities for further development on
+    <monospace>QuantumReservoirPy</monospace> include supplementary
+    built-in processing schemes, expanded features for data
+    visualization, and reservoir evaluation methods.</p>
+  </sec>
+</sec>
+<sec id="acknowledgements">
+  <title>Acknowledgements</title>
+  <p>Work in this project was supported by the NTNU and SINTEF Digital
+  through the International Work-Integrated-Learning in Artificial
+  Intelligence (IWIL AI) program, in partnership with SFI NorwAI and the
+  Waterloo Artificial Intelligence Institute (Waterloo.AI). IWIL AI is
+  funded by the Norwegian Directorate for Higher Education and Skills
+  (HK-dir).</p>
+</sec>
+</body>
+<back>
+<ref-list>
+  <title></title>
+  <ref id="ref-fernando03">
+    <element-citation publication-type="paper-conference">
+      <person-group person-group-type="author">
+        <name><surname>Fernando</surname><given-names>Chrisantha</given-names></name>
+        <name><surname>Sojakka</surname><given-names>Sampsa</given-names></name>
+      </person-group>
+      <article-title>Pattern recognition in a bucket</article-title>
+      <source>Advances in artificial life</source>
+      <publisher-name>Springer Berlin Heidelberg</publisher-name>
+      <publisher-loc>Berlin, Heidelberg</publisher-loc>
+      <year iso-8601-date="2003">2003</year>
+      <isbn>978-3-540-39432-7</isbn>
+      <fpage>588</fpage>
+      <lpage>597</lpage>
+    </element-citation>
+  </ref>
+  <ref id="ref-trouvain20">
+    <element-citation publication-type="paper-conference">
+      <person-group person-group-type="author">
+        <name><surname>Trouvain</surname><given-names>Nathan</given-names></name>
+        <name><surname>Pedrelli</surname><given-names>Luca</given-names></name>
+        <name><surname>Dinh</surname><given-names>Thanh Trung</given-names></name>
+        <name><surname>Hinaut</surname><given-names>Xavier</given-names></name>
+      </person-group>
+      <article-title>ReservoirPy: an Efficient and User-Friendly Library to Design Echo State Networks</article-title>
+      <source>ICANN 2020 - 29th International Conference on Artificial Neural Networks</source>
+      <publisher-loc>Bratislava, Slovakia</publisher-loc>
+      <year iso-8601-date="2020-09">2020</year><month>09</month>
+      <uri>https://inria.hal.science/hal-02595026</uri>
+    </element-citation>
+  </ref>
+  <ref id="ref-jaeger04">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Jaeger</surname><given-names>Herbert</given-names></name>
+        <name><surname>Haas</surname><given-names>Harald</given-names></name>
+      </person-group>
+      <article-title>Harnessing nonlinearity: Predicting chaotic systems and saving energy in wireless communication</article-title>
+      <source>Science</source>
+      <year iso-8601-date="2004">2004</year>
+      <volume>304</volume>
+      <issue>5667</issue>
+      <uri>https://www.science.org/doi/abs/10.1126/science.1091277</uri>
+      <pub-id pub-id-type="doi">10.1126/science.1091277</pub-id>
+      <fpage>78</fpage>
+      <lpage>80</lpage>
+    </element-citation>
+  </ref>
+  <ref id="ref-mujal23">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Mujal</surname><given-names>Pere</given-names></name>
+        <name><surname>Martínez-Peña</surname><given-names>Rodrigo</given-names></name>
+        <name><surname>Giorgi</surname><given-names>Gian Luca</given-names></name>
+        <name><surname>Soriano</surname><given-names>Miguel C.</given-names></name>
+        <name><surname>Zambrini</surname><given-names>Roberta</given-names></name>
+      </person-group>
+      <article-title>Time-series quantum reservoir computing with weak and projective measurements</article-title>
+      <source>npj Quantum Information</source>
+      <year iso-8601-date="2023-02-23">2023</year><month>02</month><day>23</day>
+      <volume>9</volume>
+      <issue>1</issue>
+      <issn>2056-6387</issn>
+      <uri>https://doi.org/10.1038/s41534-023-00682-z</uri>
+      <pub-id pub-id-type="doi">10.1038/s41534-023-00682-z</pub-id>
+      <fpage>16</fpage>
+      <lpage></lpage>
+    </element-citation>
+  </ref>
+  <ref id="ref-suzuki22">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Suzuki</surname><given-names>Yudai</given-names></name>
+        <name><surname>Gao</surname><given-names>Qi</given-names></name>
+        <name><surname>Pradel</surname><given-names>Ken C.</given-names></name>
+        <name><surname>Yasuoka</surname><given-names>Kenji</given-names></name>
+        <name><surname>Yamamoto</surname><given-names>Naoki</given-names></name>
+      </person-group>
+      <article-title>Natural quantum reservoir computing for temporal information processing</article-title>
+      <source>Scientific Reports</source>
+      <year iso-8601-date="2022-01-25">2022</year><month>01</month><day>25</day>
+      <volume>12</volume>
+      <issue>1</issue>
+      <issn>2045-2322</issn>
+      <uri>https://doi.org/10.1038/s41598-022-05061-w</uri>
+      <pub-id pub-id-type="doi">10.1038/s41598-022-05061-w</pub-id>
+      <fpage>1353</fpage>
+      <lpage></lpage>
+    </element-citation>
+  </ref>
+  <ref id="ref-yasuda23">
+    <element-citation>
+      <person-group person-group-type="author">
+        <name><surname>Yasuda</surname><given-names>Toshiki</given-names></name>
+        <name><surname>Suzuki</surname><given-names>Yudai</given-names></name>
+        <name><surname>Kubota</surname><given-names>Tomoyuki</given-names></name>
+        <name><surname>Nakajima</surname><given-names>Kohei</given-names></name>
+        <name><surname>Gao</surname><given-names>Qi</given-names></name>
+        <name><surname>Zhang</surname><given-names>Wenlong</given-names></name>
+        <name><surname>Shimono</surname><given-names>Satoshi</given-names></name>
+        <name><surname>Nurdin</surname><given-names>Hendra I.</given-names></name>
+        <name><surname>Yamamoto</surname><given-names>Naoki</given-names></name>
+      </person-group>
+      <article-title>Quantum reservoir computing with repeated measurements on superconducting devices</article-title>
+      <year iso-8601-date="2023">2023</year>
+      <uri>https://arxiv.org/abs/2310.06706</uri>
+    </element-citation>
+  </ref>
+  <ref id="ref-tanaka2019">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Tanaka</surname><given-names>Gouhei</given-names></name>
+        <name><surname>Yamane</surname><given-names>Toshiyuki</given-names></name>
+        <name><surname>Héroux</surname><given-names>Jean Benoit</given-names></name>
+        <name><surname>Nakane</surname><given-names>Ryosho</given-names></name>
+        <name><surname>Kanazawa</surname><given-names>Naoki</given-names></name>
+        <name><surname>Takeda</surname><given-names>Seiji</given-names></name>
+        <name><surname>Numata</surname><given-names>Hidetoshi</given-names></name>
+        <name><surname>Nakano</surname><given-names>Daiju</given-names></name>
+        <name><surname>Hirose</surname><given-names>Akira</given-names></name>
+      </person-group>
+      <article-title>Recent advances in physical reservoir computing: A review</article-title>
+      <source>Neural Networks</source>
+      <publisher-name>Elsevier</publisher-name>
+      <year iso-8601-date="2019">2019</year>
+      <volume>115</volume>
+      <fpage>100</fpage>
+      <lpage>123</lpage>
+    </element-citation>
+  </ref>
+</ref-list>
+</back>
+</article>
