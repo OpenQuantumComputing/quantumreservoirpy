@@ -15,9 +15,10 @@ authors:
     equal-contrib: true # (This is how you can denote equal contributions between multiple authors)
     affiliation: 2
   - name: Alexander Stasik
+  - orchid: 0000-0003-1646-2472
     equal-contrib: true # (This is how you can denote equal contributions between multiple authors)
     corresponding: true # (This is how to denote the corresponding author)
-    affiliation: 3
+    affiliation: 3, 4
   - name: Franz G. Fuchs
     equal-contrib: true # (This is how you can denote equal contributions between multiple authors)
     affiliation: 3
@@ -28,6 +29,8 @@ affiliations:
    index: 2
  - name: Department of Mathematics and Cybernetics, SINTEF Digital, Norway
    index: 3
+ - name: Department of Data Science, Norwegian University of Life Science, Norway
+   index: 4
 date: 22 February 2025
 bibliography: paper.bib
 ---
