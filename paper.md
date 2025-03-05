@@ -7,26 +7,27 @@ tags:
   - auantum circuits
   - qiskit
 authors:
-  - name: Stanley Miao
-    equal-contrib: true
-    affiliation: 1 # (Multiple affiliations must be quoted)
   - name: Ola Tangen Kulseng
     orcid: 0009-0009-9807-4975
     equal-contrib: true # (This is how you can denote equal contributions between multiple authors)
-    affiliation: 2
+    affiliation: 1
+  - name: Stanley Miao
+    equal-contrib: true
+    affiliation: 2 # (Multiple affiliations must be quoted)
+  - name: Franz G. Fuchs
+    orcid: 0000-0003-3558-503X
+    equal-contrib: true # (This is how you can denote equal contributions between multiple authors)
+    affiliation: 3
   - name: Alexander Stasik
-  - orchid: 0000-0003-1646-2472
+    orcid: 0000-0003-1646-2472
     equal-contrib: true # (This is how you can denote equal contributions between multiple authors)
     corresponding: true # (This is how to denote the corresponding author)
     affiliation: 3, 4
-  - name: Franz G. Fuchs
-    equal-contrib: true # (This is how you can denote equal contributions between multiple authors)
-    affiliation: 3
 affiliations:
  - name: David R. Cheriton School of Computer Science, University of Waterloo, Canada
-   index: 1
- - name: Department of Physics, Norwegian University of Science and Technology (NTNU), Norway
    index: 2
+ - name: Department of Physics, Norwegian University of Science and Technology (NTNU), Norway
+   index: 1
  - name: Department of Mathematics and Cybernetics, SINTEF Digital, Norway
    index: 3
  - name: Department of Data Science, Norwegian University of Life Science, Norway
