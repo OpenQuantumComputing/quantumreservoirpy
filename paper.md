@@ -53,8 +53,11 @@ Our package results in simplified development and logical methods of comparison 
 Examples are provided to demonstrate the resulting simplicity of executing quantum reservoir computing using our software package. -->
 
 # Statement of need
-Reservoir computing (RC) is a paradigm in machine learning for time series prediction. With recent developments, it has shown a promising advantage in efficiency due to the relative simplicity of the associated training process over conventional neural network methods [@tanaka2019].
-In reservoir computing, a dynamical system composed of hidden functional representations with non-linear state transitions is chosen as a reservoir. Input data from a time series is sequentially encoded and fed into the reservoir. The hidden parameters of the reservoir undergo a non-linear evolution dependent on the stored state and the encoded information fed into the system. Features are subsequently decoded from a readout of certain parameters of the reservoir, which is used to train a simple linear model for the desired time series prediction output, see \autoref{fig1} for an illustration.
+Reservoir computing (RC) is a paradigm in machine learning for time series prediction. With recent developments, it has shown a promising advantage in efficiency due to the relative simplicity of the associated training process over conventional neural network methods [@tanaka2019]. At the core of reservoir computing is the idea of a reservoir, which is a dynamical system with non-linear state transitions that is used to embed time series data into a high dimensional space.
+
+<!-- In reservoir computing, a dynamical system composed of hidden functional representations with non-linear state transitions is used to embed time series data in a high-dimensional space. -->
+
+ Input data from the time series is sequentially encoded and fed into the reservoir. The hidden parameters of the reservoir undergo a non-linear evolution dependent on the stored state and the encoded information fed into the system. Features are subsequently decoded from a readout of certain parameters of the reservoir, which is used to train a simple linear model for the desired time series prediction output, see \autoref{fig1} for an illustration.
 
 ![A quantum reservoir system consists of a learning task, an en- and de-coder (red) and the dynamic system itself (green). In standard RC the machine learning part is linear regression.\label{fig1}](fig1.pdf)
 
@@ -67,7 +70,7 @@ where $h$ is the observation function. If the reservoir is fully observed, $h$ r
 
 QRC is a proposed method of RC utilizing quantum circuits as reservoirs. Multi-qubit systems with the capability of quantum entanglement provide compelling non-linear dynamics that match the requirements for a feasible reservoir. Furthermore, the exponentially-scaling Hilbert space of large multi-qubit systems support the efficiency and state-storage goals of RC. As a result, quantum computers have been touted as a viable dynamical system to produce the intended effects of reservoir computing.
 
-In QRC, data is encoded by operating on one or more qubit(s) to reach a desired state. To obtain the desired complex non-linearity in a quantum system as a reservoir, entangling unitary operations are performed over the system. The readout is measured from one or more qubit(s) of the quantum state, which can be achieved through partial or full measurement over the system. Since quantum measurement results in a collapse to the measured state, repetitive measurements over identical systems are used to sample from the distribution of the unknown quantum state, which is then post-processed to obtain a decoded measurement for the subsequent linear model. Furthermore, this collapse results in a loss of retained information and entanglement in the system. Where only a partial measurement is taken (as in [@yasuda23]), this may have a desired effect of a slow leak of information driven from earlier input. When measurement is taken over the full system, the system may instead be restored through re-preparation of the pre-existing system, achieved in [@suzuki22] and through the restarting and rewinding protocols in [@mujal23].
+<!-- In QRC, data is encoded by operating on one or more qubit(s) to reach a desired state. To obtain the desired complex non-linearity in a quantum system as a reservoir, entangling unitary operations are performed over the system. The readout is measured from one or more qubit(s) of the quantum state, which can be achieved through partial or full measurement over the system. Since quantum measurement results in a collapse to the measured state, repetitive measurements over identical systems are used to sample from the distribution of the unknown quantum state, which is then post-processed to obtain a decoded measurement for the subsequent linear model. Furthermore, this collapse results in a loss of retained information and entanglement in the system. Where only a partial measurement is taken (as in [@yasuda23]), this may have a desired effect of a slow leak of information driven from earlier input. When measurement is taken over the full system, the system may instead be restored through re-preparation of the pre-existing system, achieved in [@suzuki22] and through the restarting and rewinding protocols in [@mujal23]. -->
 
 Existing implementations of QRC have used proprietary realizations on simulated and actual quantum computers. The lack of a shared structure between implementations has resulted in a disconnect with comparing reservoir architectures. In addition, individual implementations require a certain amount of redundant procedure prior to the involvement of specific concepts.
 
@@ -84,11 +87,6 @@ over pre-processing, input, quantum circuit operations,
 measurement, and post-processing. In particular, we take inspiration from the simple and flexible structure provided by the ReservoirPy software package [reservoirpy](https://github.com/reservoirpy/reservoirpy) [@trouvain20].
 
 
-Unlike the parameterized single-class structure of ReservoirPy, `QuantumReservoirPy` uses the abstract class-based structure of \autoref{fig2} as the former would be restrictive in the full customization of QRC. In particular, quantum circuit operations and measurement may be conducted in differing arrangements. With an abstract class, we allow the user to define the functionality of the quantum circuit, which provides full flexibility over all existing implementations of QRC. This structure also implicitly provides access to the full Qiskit [circuit library](https://docs.quantum.ibm.com/api/qiskit/circuit_library).
-
-
-## Construction and processing
-
 The construction methods in `QuantumReservoirPy` serve as the sequential operations performed on the quantum system. The operations in the `before` method prepares the qubits, which may include initialization to a default, initial, or previously saved state. The `during` method provides the operations that are subsequently applied for each step in the timeseries. This may include (but is not limited to) measurement, re-initialization, and entangling operations. Finally, the operations in the `predict` method are applied once following the processing of the entire timeseries, which may include the transformation of final qubit states and measurement. \autoref{fig3}a demonstrates the aforementioned arrangement, which is implemented as a hidden intermediary process in a `QuantumReservoirPy` quantum reservoir.
 
 ![The intended functionality of the `run` and `predict` method. The observed input sequence is $\{x_t\}$ and the target sequence $\{y_t\}$. The reservoir $f$ performs an evolution in time.\label{fig3}](fig3.pdf)
@@ -97,7 +95,7 @@ The processing methods serve as functions acting on the quantum reservoir itself
 
 The `predict` method functions as a complete forecasting process involving the same hidden `circuit` interface, encoding, decoding, and post-processing. Additionally, a trained simple machine learning model is used to predict the next step in the timeseries from the transformed and post-processed data. The resulting prediction is then fed in as input for the following prediction, which occurs as an iterative process until the specified number of forecasting steps is reached. At this point, the `predict` method returns the sequence of predictions from each iteration. \autoref{fig3}c provides a visualization of the `predict` method.
 
-# Reservoirs and example usage
+<!-- # Reservoirs and example usage
 
 `QuantumReservoirPy` provides two prepackaged reservoirs that implement the processing methods `run` and `predict` according to the structure presented above. These reservoirs use common QRC schemes as a basis to get started with the software package or restrict customization to circuit construction. As such, the construction of a reservoir using either of these schemes only requires user implementation of the sequential circuit methods `before`, `during`, and `after`.
 
@@ -165,7 +163,7 @@ output = reservoir.run(timeseries=timeseries, shots=10000)
 # ...(model training)...
 predictions = reservoir.predict(num_pred=10, model=model, from_series=timeseries, shots=10000)
 ```
-Model training of a scikit-learn estimator between the `run` and `predict` methods is not shown. The `shots` parameter is directly passed to the Qiskit backend when using a prepackaged reservoir.
+Model training of a scikit-learn estimator between the `run` and `predict` methods is not shown. The `shots` parameter is directly passed to the Qiskit backend when using a prepackaged reservoir. -->
 
 # Package Details
 
@@ -174,22 +172,22 @@ Model training of a scikit-learn estimator between the `run` and `predict` metho
 The three main dependencies of `QuantumReservoirPy` are numpy, qiskit, and scikit-learn.
 We strive for `QuantumReservoirPy` to support compatibility with existing reservoir computing and quantum computing workflows.
 
-`QuantumReservoirPy` uses NumPy as a core dependency. Allowed versions of NumPy ensure compatibility with classical ReservoirPy to facilitate comparison between classical and quantum reservoir architectures. An example is provided [here](examples\static).
+<!-- `QuantumReservoirPy` uses NumPy as a core dependency. Allowed versions of NumPy ensure compatibility with classical ReservoirPy to facilitate comparison between classical and quantum reservoir architectures. An example is provided [here](https://github.com/OpenQuantumComputing/quantumreservoirpy/tree/main/examples/static). -->
 
 Much of existing research in QRC is performed on IBM devices and simulators (see [@yasuda23; @suzuki22]), programmed through the Qiskit software package. To minimize disruption in current workflows, `QuantumReservoirPy` is built as a package to interact with Qiskit circuits and backends. It is expected that the user also use Qiskit in the customization of reservoir architecture when working with `QuantumReservoirPy`.
 
-The model used by the `predict` function is expected to be a scikit-learn estimator. Likewise to our dependency on Qiskit, this allows for complete customization over the choice of model and faster adoption of `QuantumReservoirPy` from a simple package structure.
+<!-- The model used by the `predict` function is expected to be a scikit-learn estimator. Likewise to our dependency on Qiskit, this allows for complete customization over the choice of model and faster adoption of `QuantumReservoirPy` from a simple package structure. -->
 
-## Distribution
-The software package is developed and maintained through a public GitHub repository provided through the `OpenQuantumComputing` organization. The `main` branch of this repository serves as the latest stable version of `QuantumReservoirPy`. Installation through cloning this repository is intended for development purposes.
+## License
+<!-- The software package is developed and maintained through a public GitHub repository provided through the `OpenQuantumComputing` organization. The `main` branch of this repository serves as the latest stable version of `QuantumReservoirPy`. Installation through cloning this repository is intended for development purposes. -->
 
-Official releases of the software package are published through the Python Package Index (PyPI) under the `quantumreservoirpy` name. Installation through PyPI is the suggested method of installation for general-purpose use.
+<!-- Official releases of the software package are published through the Python Package Index (PyPI) under the `quantumreservoirpy` name. Installation through PyPI is the suggested method of installation for general-purpose use. -->
 
 `QuantumReservoirPy` is licensed under the GNU General Public License v3.0. `QuantumReservoirPy` also includes derivative work of Qiskit, which is licensed by IBM under the Apache License, Version 2.0.
 
-## Documentation
+<!-- ## Documentation
 Documentation is mainly provided online in the form of a user guide and API reference. The user guide includes steps for installation and getting started with a simple quantum reservoir. Examples are also provided for further guidance. The API reference outlines the intended classes and functions exposed by the software package.
-A brief overview of the software package is also included as a `README.md` file at the top level of the public GitHub repository.
+A brief overview of the software package is also included as a `README.md` file at the top level of the public GitHub repository. -->
 
 ## Further Development
 The authors continue to support and maintain the project. Users may report package issues and desired features by opening an issue on the public GitHub repository or contacting the authors by email. Additional opportunities for further development on `QuantumReservoirPy` include supplementary built-in processing schemes, expanded features for data visualization, and reservoir evaluation methods.
