@@ -93,8 +93,6 @@ def main(num_qubits, num_meas, num_reservoirs, method, noise, lentrain, decode, 
     with open("tableau_"+"num_qubits"+str(num_qubits)+"_num_measurements"+str(num_meas)+"_num_tableaus100.pickle","rb") as f:
         tableau = pickle.load(f)
 
-    print(tableau[tableaunr])
-
     if method == "classical":
         res = Reservoir(num_neurons, lr=0.5, sr=0.9)
     elif method == "quantum_part":
