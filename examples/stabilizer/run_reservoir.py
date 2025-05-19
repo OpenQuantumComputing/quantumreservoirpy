@@ -45,7 +45,7 @@ def henon1d(n, a=1.4, b=0.3):
     return np.array(ts[2:])
 
 
-def main(num_qubits, num_meas, num_reservoirs, method, noise, lentrain, decode, casename, timeplex=10, degree=None):
+def main(num_qubits, num_meas, num_reservoirs, method, noise, lentrain, decode, casename, tableaunr, timeplex=10, degree=None):
 
     if not degree:
         degree = num_meas
@@ -64,6 +64,7 @@ def main(num_qubits, num_meas, num_reservoirs, method, noise, lentrain, decode, 
     string_identifier+="_method"+str(method)+"_noise"+str(noise)
     if not decode:
         string_identifier+="_decodeFalse"
+    string_identifier+="_tableaunr"+str(tableaunr)
 
     print(string_identifier, " number of neurons/observables=",num_neurons )
 
@@ -89,7 +90,8 @@ def main(num_qubits, num_meas, num_reservoirs, method, noise, lentrain, decode, 
     with open("isingparams_"+"num_qubits"+str(num_qubits)+"_num_reservoirs"+str(num_reservoirs)+".pickle","rb") as f:
         isingparams = pickle.load(f)
 
-
+    with open("tableau_"+"num_qubits"+str(num_qubits)+"_num_measurements"+str(num_meas)+"_num_tableaus100.pickle","rb") as f:
+        tableau = pickle.load(f)
 
     if method == "classical":
         res = Reservoir(num_neurons, lr=0.5, sr=0.9)
@@ -97,8 +99,8 @@ def main(num_qubits, num_meas, num_reservoirs, method, noise, lentrain, decode, 
         res = PartialMeasurement(num_qubits, num_meas, backend = AerSimulator(noise_model=noise_model),\
                                  degree=degree, num_reservoirs=num_reservoirs, isingparams=isingparams,decode=decode)
     elif method == "quantum_stab":
-        res = Stabilizer(num_qubits, num_meas, backend = AerSimulator(noise_model=noise_model),\
-                         degree=degree, num_reservoirs=num_reservoirs, isingparams=isingparams,decode=decode)
+        res = Stabilizer(num_qubits, num_meas, backend = AerSimulator(noise_model=noise_model, method="automatic", device="GPU"),\
+                         degree=degree, num_reservoirs=num_reservoirs, isingparams=isingparams,decode=decode, tableau = tableau[tableaunr])
 
     tscv = TimeSeriesSplit()
 
@@ -119,7 +121,7 @@ def main(num_qubits, num_meas, num_reservoirs, method, noise, lentrain, decode, 
             states = res.run(X_train.reshape(-1, 1), reset=True)
             linreg, X, y = fit_model(linreg, states, X_train, WARMUP, 1)
         else:
-            states = res.run(timeseries=X_train, shots=1e3, precision=1e-2)
+            states = res.run(timeseries=X_train, shots=1e3, precision=1e-2, transpile=False)
             linreg, X, y = fit_model(linreg, states, X_train, WARMUP, timeplex)
 
         score = linreg.score(X, y)
@@ -144,7 +146,7 @@ def main(num_qubits, num_meas, num_reservoirs, method, noise, lentrain, decode, 
                     states = res.run(prediction[-1])
                 tmp = run_prediction(linreg, states, 1)
             else:
-                states = res.run(prediction[-2*int(timeplex):], shots=1e3, precision=1e-2)
+                states = res.run(prediction[-2*int(timeplex):], shots=1e3, precision=1e-2,transpile=False)
                 tmp = run_prediction(linreg, states, timeplex)
             
             prediction = np.append(prediction,tmp)
@@ -165,7 +167,8 @@ if __name__ == "__main__":
     lentrain = int(sys.argv[6])
     decode = bool(int(sys.argv[7]))
     casename = str(sys.argv[8])
+    tableaunr = int(sys.argv[9])
 
-    print("Running:", num_qubits, num_meas, num_reservoirs, method, noise, lentrain, decode, casename)
-    main(num_qubits, num_meas, num_reservoirs, method, noise, lentrain, decode, casename)
+    print("Running:", num_qubits, num_meas, num_reservoirs, method, noise, lentrain, decode, casename, tableaunr)
+    main(num_qubits, num_meas, num_reservoirs, method, noise, lentrain, decode, casename, tableaunr)
 
