@@ -4,7 +4,7 @@ tags:
   - Python
   - physics
   - quantum information
-  - auantum circuits
+  - quantum circuits
   - qiskit
 authors:
   - name: Ola Tangen Kulseng
@@ -37,7 +37,7 @@ bibliography: paper.bib
 ---
 
 # Summary
-Reservoir computing on quantum computers have recently emerged as a potential resource for time series prediction, owing to their inherent complex dynamics. To advance Quantum Reservoir Computing (QRC) research, we have developed the Python package [`QuantumReservoirPy`](https://github.com/OpenQuantumComputing/quantumreservoirpy), which fascilitates QRC using quantum circuits as reservoirs.
+Reservoir computing on quantum computers have recently emerged as a potential resource for time series prediction, owing to their inherent complex dynamics. To advance Quantum Reservoir Computing (QRC) research, we have developed the Python package [`QuantumReservoirPy`](https://github.com/OpenQuantumComputing/quantumreservoirpy), which facilitates QRC using quantum circuits as reservoirs.
 
 The package is designed to be easy to use, while staying completely customizable. The resulting interface, similar to that of [reservoirpy](https://github.com/reservoirpy/reservoirpy) [@trouvain20], simplifies the development of quantum reservoirs, and provides logical methods of comparison between reservoir architectures.
 
