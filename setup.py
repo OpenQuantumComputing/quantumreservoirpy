@@ -2,6 +2,7 @@ from setuptools import setup
 
 INSTALL_REQUIRES = [
     "matplotlib",
+    "tqdm",
     "pylatexenc>=2.0",
     "qiskit>=1.0",
     "qiskit-aer>=0.12.0",
@@ -10,7 +11,10 @@ INSTALL_REQUIRES = [
     "ipykernel"
 ]
 
-setup(name='quantumreservoirpy',
-      version='0.2',
-      packages=['quantumreservoirpy'],
-      install_requires=INSTALL_REQUIRES)
+setup(
+    name='quantumreservoirpy',
+    version='0.2',
+    packages=['quantumreservoirpy'],
+    install_requires=INSTALL_REQUIRES,
+    python_requires='>=3.9',
+)
