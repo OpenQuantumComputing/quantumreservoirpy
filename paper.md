@@ -78,8 +78,7 @@ The processing methods do not affect the creation of the reservoirs, but are inc
 
 ## Dependencies
 
-The three main dependencies of `QuantumReservoirPy` are numpy, qiskit, and scikit-learn.
-We strive for `QuantumReservoirPy` to support compatibility with existing reservoir computing and quantum computing workflows.
+The three main dependencies of `QuantumReservoirPy` are numpy, qiskit, and scikit-learn, with python versions above 3.9. Qiskit is [deprecating](https://github.com/Qiskit/qiskit/releases) python 3.9 support in the 2.1.0 version, and the package presented here is developed to support qiskit=2.0.x. As for the other packages, the supported versions of scikit-learn and numpy follows from their interrelated constraints as well as the constraint from qiskit. In the install script, we specify numpy>1.17. We strive for `QuantumReservoirPy` to support compatibility with existing reservoir computing and quantum computing workflows.
 
 Much of existing research in QRC is performed on IBM devices and simulators (see [@yasuda23; @suzuki22]), programmed through the Qiskit software package. To minimize disruption in current workflows, `QuantumReservoirPy` is built as a package to interact with Qiskit circuits and backends. It is expected that the user also use Qiskit in the customization of reservoir architecture when working with `QuantumReservoirPy`.
 

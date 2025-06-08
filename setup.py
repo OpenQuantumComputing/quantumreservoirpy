@@ -4,9 +4,9 @@ INSTALL_REQUIRES = [
     "matplotlib",
     "tqdm",
     "pylatexenc>=2.0",
-    "qiskit>=1.0",
+    "qiskit<2.1.0",
     "qiskit-aer>=0.12.0",
-    "numpy>=1.21.6",
+    "numpy>=1.17",
     "scikit-learn",
     "ipykernel"
 ]
