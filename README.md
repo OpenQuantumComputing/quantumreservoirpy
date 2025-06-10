@@ -101,6 +101,11 @@ This will return a `np.ndarray` of the same length as the timeseries, correspond
 
 `Incremental` reservoirs run incrementally. For every state, only the last `M` steps of the timeseries is built at a time (`M` being a parameter of `Incremental.__init__`).
 
+## Testing
+Some tests have been implemented using pytest. To run them, ensure pytest is installed (*not* installed as runtime dependency) and run
+```python
+pytest
+```
 ## About
 
 You can find out more about QuantumReservoirPy and contact the authors [here](https://quantumreservoirpy.readthedocs.io/en/latest/about/).

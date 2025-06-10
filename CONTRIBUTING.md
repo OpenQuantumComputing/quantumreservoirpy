@@ -5,7 +5,10 @@ Thank you for considering contributing! We welcome all kinds of contributions—
 ---
 
 ## How to Contribute
-Feel free to submit a "pull request" on GitHub in a designated feature branch. Include comments about what the fix/update does.
+Feel free to submit a "pull request" on GitHub in a designated feature branch. Include comments about what the fix/update does, and ensure the tests work by running:
+```python
+states = res.run(timeseries)
+```
 
 For new features, please also consider updating the examples folder to show the intended use of the feature.
 
