@@ -3,12 +3,9 @@ import numpy as np
 from qiskit import QuantumCircuit, ClassicalRegister, QuantumRegister, AncillaRegister
 from qiskit.quantum_info import random_clifford, Clifford, Pauli
 from qiskit.circuit.library import PauliEvolutionGate
-
 from quantumreservoirpy.util import randomIsing, get_Ising_circuit
 from quantumreservoirpy.reservoirs import Static
-
 from typing import Iterable
-
 
 class Stabilizer(Static):
     def __init__(
@@ -28,7 +25,7 @@ class Stabilizer(Static):
         decode=True,  # danger zone: this is only for testing
     ) -> None:
         super().__init__(
-            n_qubits + 1, memory, backend, degree=degree, num_reservoirs=num_reservoirs
+            n_qubits , memory, backend, degree=degree, num_reservoirs=num_reservoirs
         )
         self.n_meas = n_meas
         self.decode = decode
@@ -73,13 +70,13 @@ class Stabilizer(Static):
 
         # encode
         for k in range(self.n_meas):
-            beta = 3**k
+            beta = 3**(k/self.n_meas)/2*np.pi
             pauliop = Pauli(self.tableau["destabilizer"][k])
-            evo = PauliEvolutionGate(pauliop, -beta / 2 * np.pi * timestep)
-            circuit.append(evo, range(self.n_qubits - 1))
-
+            evo = PauliEvolutionGate(pauliop, -beta  * timestep)
+            circuit.append(evo, range(self.n_qubits ))
+        circuit.barrier()
         # reservoir
-        circuit.append(self.U[reservoirnumber], range(self.n_qubits - 1))
+        circuit.append(self.U[reservoirnumber], range(self.n_qubits))
 
         # decode
         cr = ClassicalRegister(self.n_meas)
@@ -128,7 +125,6 @@ class Stabilizer(Static):
                 for i in to_pop:
                     tableau["stabilizer"].pop(i)
                     tableau["destabilizer"].pop(i)
-            print(tableau)
 
             # check the stabilizer has the right dimension
             if (
@@ -137,7 +133,29 @@ class Stabilizer(Static):
             ):
                 print("Error : something went wrong with tableau generation")
                 print(tableau)
+        '''
+            # Construct stabilizers: Z on qubit i, I elsewhere
+        stabilizers = []
+        for i in range(n_meas):
+            pauli_str = ["I"] * n_qubits
+            pauli_str[i] = "Z"
+            stabilizers.append("+" + "".join(pauli_str))
 
+        # Construct destabilizers: X on qubit i, I elsewhere
+        destabilizers = []
+        for i in range(n_meas):
+            pauli_str = ["I"] * n_qubits
+            pauli_str[i] = "X"
+            destabilizers.append("+" + "".join(pauli_str))
+
+        tableau = {
+            "stabilizer": stabilizers,
+            "destabilizer": destabilizers,
+        }
+
+        print("stab,destab")
+        print(tableau["stabilizer"], tableau["destabilizer"])
+        '''
         return tableau
 
     @staticmethod
@@ -222,24 +240,23 @@ class Stabilizer(Static):
 
         for j in range(n_meas):
             P = code_tableau["stabilizer"][j]
-            if P[0] == -1:
+            P_aux=P[1:][::-1]
+            if P[0] == str('-'):
                 circuit.z(ar[j])
-            for i in range(1, len(P)):
-                if P[i] == "X":
-                    circuit.cx(ar[j], qr[i - 1])
-                elif P[i] == "Y":
-                    circuit.cy(ar[j], qr[i - 1])
-                elif P[i] == "Z":
-                    circuit.cz(ar[j], qr[i - 1])
+            for i in range(0, len(P_aux)):
+                if P_aux[i] == "X":
+                    circuit.cx(ar[j], qr[i])
+                elif P_aux[i] == "Y":
+                    circuit.cy(ar[j], qr[i])
+                elif P_aux[i] == "Z":
+                    circuit.cz(ar[j], qr[i])
 
         circuit.h(ar)
 
         for j in range(n_meas):
             circuit.measure(ar[j], cr[j])
             circuit.barrier()
-
         for j in range(n_meas):
             with circuit.if_test((cr[j], 1)):
-                circuit.pauli(code_tableau["destabilizer"][j][1:], qr[:-1])
-
+                circuit.pauli(code_tableau["destabilizer"][j][1:], qr)
         return circuit

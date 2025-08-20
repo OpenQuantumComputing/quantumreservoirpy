@@ -133,10 +133,7 @@ class Static(QReservoir):
         # tmp_vals=[]
         for key, count in counts.items():
             key_t = key.split()[t]
-            val = (
-                0.5
-                - np.prod(1 - 2.0 * np.array([int(key_t[ind_O]) for ind_O in Obs])) / 2
-            )
+            val=-np.prod(1 - 2.0 * np.array([int(key_t[ind_O]) for ind_O in Obs]))
             stat.add_sample(val, count)
             # tmp_counts+=count
             # tmp_vals.append(val*count)
