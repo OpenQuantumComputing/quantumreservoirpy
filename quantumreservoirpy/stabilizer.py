@@ -1,13 +1,15 @@
 from itertools import combinations, product
 import numpy as np
+from typing import Iterable
+import random
+
 from qiskit import QuantumCircuit, ClassicalRegister, QuantumRegister, AncillaRegister
 from qiskit.quantum_info import random_clifford, Clifford, Pauli
 from qiskit.circuit.library import PauliEvolutionGate
+
 from quantumreservoirpy.util import randomIsing, get_Ising_circuit
 from quantumreservoirpy.reservoirs import Static
-from typing import Iterable
-import itertools
-import random
+
 class Stabilizer(Static):
     def __init__(
         self,
