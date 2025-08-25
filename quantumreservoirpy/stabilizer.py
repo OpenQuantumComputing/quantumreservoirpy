@@ -89,7 +89,6 @@ class Stabilizer(Static):
 
         if self.decode:
             Stabilizer.decoder(circuit, self.tableau)
-    
     @staticmethod
     def generate_tableau(
         n_qubits: int,
@@ -248,8 +247,6 @@ class Stabilizer(Static):
         circuit.barrier()
 
         # syndrome measurement operations
-       
-
         for j in range(n_meas):
             circuit.reset(ar)
             circuit.h(ar)
@@ -268,7 +265,6 @@ class Stabilizer(Static):
             circuit.h(ar)
             circuit.measure(ar, cr[j])
             circuit.barrier()
-            
         for j in range(n_meas):
             with circuit.if_test((cr[j], 1)):
                 circuit.pauli(code_tableau["destabilizer"][j][1:], qr)
