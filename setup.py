@@ -10,6 +10,7 @@ INSTALL_REQUIRES = [
     "scikit-learn",
     "ipykernel"
     "stim"
+    "bitarray"
 ]
 
 setup(
