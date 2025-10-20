@@ -1,8 +1,6 @@
 import sys
 
-
 sys.path.append(r"C:\Users\rubenb\OneDrive - SINTEF\Desktop\cluster_exp\quantumreservoirpy")
-from reservoirpy.datasets import logistic_map, narma
 import numpy as np
 import reservoirpy as rpy
 import pickle
@@ -17,7 +15,7 @@ from reservoirpy.nodes import Reservoir
 from quantumreservoirpy.partialmeasurement import PartialMeasurement
 from quantumreservoirpy.stabilizer import Stabilizer
 from qiskit_aer import AerSimulator
-import random
+import random 
 from itertools import islice
 from collections import defaultdict
 
@@ -26,7 +24,6 @@ def fit_model(model, res_states, series, WARMUP, timeplex=1):
 
     X = res_states[warmup:-1]
     y = series[warmup + 1 :]
-
     model.fit(X, y)
 
     return model, X, y
@@ -35,7 +32,6 @@ def fit_model(model, res_states, series, WARMUP, timeplex=1):
 def run_prediction(model, res_states, timeplex=1):
 
     X = np.copy(res_states)
-
     X = X[-1,:]
     X = X.reshape((1, -1))
     return model.predict(X)
@@ -46,9 +42,15 @@ def henon1d(n, a=1.4, b=0.3):
         ts.append(1 - a*ts[i-1]**2 + b*ts[i-2])
     return np.array(ts[2:])
 
+    string_identifier="casename"+str(casename)+"_num_qubits"+str(num_qubits)+"_num_meas"+str(num_meas)
+    string_identifier+="_degree"+str(degree)+"_num_reservoirs"+str(num_reservoirs)+"_timeplex"+str(timeplex)
+    string_identifier+="_method"+str(method)+"_noise"+str(noise)
+    if not decode:
+        string_identifier+="_decodeFalse"
+    string_identifier+="_tableaunr"+str(tableaunr)
 
+def main(num_qubits, num_meas, num_reservoirs, method, noise, lentrain, decode, casename, tableaunr, timeplex=10, degree=None, stab_method='random',stab_degree=1):
 
-def main(num_qubits, num_meas, num_reservoirs, method, noise, lentrain, decode, casename, tableaunr,stab_method, stab_degree, timeplex=1, degree=None):
     if not degree:
         degree = num_meas
     #degree = min(degree, 3)
@@ -60,13 +62,13 @@ def main(num_qubits, num_meas, num_reservoirs, method, noise, lentrain, decode, 
     elif casename == "logistic":
         ts=logistic_map(30, r=3.9, x0=0.5).flatten()
     #ts=narma(200).flatten()
-
     string_identifier="casename"+str(casename)+"_num_qubits"+str(num_qubits)+"_num_meas"+str(num_meas)
-    string_identifier+="_degree"+str(degree)+"_num_reservoirs20"+"_timeplex10"
+    string_identifier+="_degree"+str(degree)+"_num_reservoirs"+str(num_reservoirs)+"_timeplex"+str(timeplex)
     string_identifier+="_method"+str(method)+"_noise"+str(noise)
     if not decode:
         string_identifier+="_decodeFalse"
     string_identifier+="_tableaunr"+str(tableaunr)
+ 
 
     print(string_identifier, " number of neurons/observables=",num_neurons )
 
@@ -179,6 +181,6 @@ if __name__ == "__main__":
     stab_degree= int(sys.argv[11])
     shots= int(sys.argv[12])
 
-    print("Running:", num_qubits, num_meas, num_reservoirs, method, noise, lentrain, decode, casename, tableaunr,stab_method,stab_degree,shots)
-    main(num_qubits, num_meas, num_reservoirs, method, noise, lentrain, decode, casename, tableaunr,stab_method,stab_degree,shots)
+    print("Running:", num_qubits, num_meas, num_reservoirs, method, noise, lentrain, decode, casename, tableaunr,stab_method, stab_degree,shots)
+    main(num_qubits, num_meas, num_reservoirs, method, noise, lentrain, decode, casename, tableaunr,stab_method, stab_degree,shots)
 

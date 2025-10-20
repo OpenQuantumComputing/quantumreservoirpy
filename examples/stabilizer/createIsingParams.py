@@ -16,6 +16,6 @@ def createanddumpsising(num_qubits):
     with open("isingparams_"+"num_qubits"+str(num_qubits)+"_num_reservoirs"+str(num_reservoirs)+".pickle","wb") as f:
         pickle.dump(isingparams, f)
 
-createanddumpsising(3)
-createanddumpsising(4)
-createanddumpsising(5)
+for num_qubits in range (3,11):
+    createanddumpsising(num_qubits)
+
