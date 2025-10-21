@@ -1,4 +1,5 @@
 from quantumreservoirpy.stabilizer import Stabilizer
+from quantumreservoirpy.fixed_weight_tableau import FixedWeightTableau
 import pickle
 
 def createanddumptableaus(num_qubits, num_measurements,degree=None):
@@ -10,7 +11,7 @@ def createanddumptableaus(num_qubits, num_measurements,degree=None):
             with open("tableau_"+"num_qubits"+str(num_qubits)+"_num_measurements"+str(num_measurements)+"degree"+str(degree)+"_num_tableaus"+str(num_tableaus)+".pickle","wb") as f:
                  pickle.dump(tableaus, f)
         else:
-            tableaus[nr] = Stabilizer.generate_tableau(num_qubits, num_measurements)
+            tableaus[nr] = FixedWeightTableau.fixed_weight_tableau(num_qubits, num_meas, degree, XYZ = False)
             with open("tableau_"+"num_qubits"+str(num_qubits)+"_num_measurements"+str(num_measurements)+"_num_tableaus"+str(num_tableaus)+".pickle","wb") as f:
                 pickle.dump(tableaus, f)
 
