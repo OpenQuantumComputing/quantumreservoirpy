@@ -89,10 +89,10 @@ def main(num_qubits, num_meas, num_reservoirs, method, noise, lentrain, decode, 
 
     WARMUP=0.3
 
-    with open("isingparams_"+"num_qubits"+str(num_qubits)+"_num_reservoirs20"+".pickle","rb") as f:
+    with open("data/isingparams_"+"num_qubits"+str(num_qubits)+"_num_reservoirs20"+".pickle","rb") as f:
         isingparams = pickle.load(f)
     isinparams = dict(islice(isingparams.items(), num_reservoirs))
-    with open("tableau_"+"num_qubits"+str(num_qubits)+"_num_measurements"+str(num_meas)+"_num_tableaus100.pickle","rb") as f:
+    with open("data/tableau_"+"num_qubits"+str(num_qubits)+"_num_measurements"+str(num_meas)+"_num_tableaus100.pickle","rb") as f:
         tableau = pickle.load(f)
     sampled_keys = random.sample(list(tableau.keys()), 1)
     sampled_list = [tableau[key] for key in sampled_keys]

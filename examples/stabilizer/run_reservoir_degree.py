@@ -42,12 +42,6 @@ def henon1d(n, a=1.4, b=0.3):
         ts.append(1 - a*ts[i-1]**2 + b*ts[i-2])
     return np.array(ts[2:])
 
-    string_identifier="casename"+str(casename)+"_num_qubits"+str(num_qubits)+"_num_meas"+str(num_meas)
-    string_identifier+="_degree"+str(degree)+"_num_reservoirs"+str(num_reservoirs)+"_timeplex"+str(timeplex)
-    string_identifier+="_method"+str(method)+"_noise"+str(noise)
-    if not decode:
-        string_identifier+="_decodeFalse"
-    string_identifier+="_tableaunr"+str(tableaunr)
 
 def main(num_qubits, num_meas, num_reservoirs, method, noise, lentrain, decode, casename, tableaunr, timeplex=10, degree=None, stab_method='random',stab_degree=1):
 
@@ -91,10 +85,10 @@ def main(num_qubits, num_meas, num_reservoirs, method, noise, lentrain, decode, 
 
     WARMUP=0.3
 
-    with open("isingparams_"+"num_qubits"+str(num_qubits)+"_num_reservoirs20"+".pickle","rb") as f:
+    with open("data/isingparams_"+"num_qubits"+str(num_qubits)+"_num_reservoirs20"+".pickle","rb") as f:
         isingparams = pickle.load(f)
     isinparams = dict(islice(isingparams.items(), num_reservoirs))
-    with open("tableau_"+"num_qubits"+str(num_qubits)+"_num_measurements"+str(num_meas)+"_num_tableaus100.pickle","rb") as f:
+    with open("data/tableau_"+"num_qubits"+str(num_qubits)+"_num_measurements"+str(num_meas)+"degree"+str(degree)+"_num_tableaus100.pickle","rb") as f:
         tableau = pickle.load(f)
     sampled_keys = random.sample(list(tableau.keys()), 1)
     sampled_list = [tableau[key] for key in sampled_keys]
