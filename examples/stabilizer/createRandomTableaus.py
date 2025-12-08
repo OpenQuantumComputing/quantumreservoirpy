@@ -8,11 +8,11 @@ def createanddumptableaus(num_qubits, num_measurements,degree=None):
     for nr in range(1, num_tableaus+ 1):
         if degree is not None:
             tableaus[nr] = Stabilizer.generate_tableau(num_qubits, num_measurements,stab_method='degree', degree=degree)
-            with open("tableau_"+"num_qubits"+str(num_qubits)+"_num_measurements"+str(num_measurements)+"degree"+str(degree)+"_num_tableaus"+str(num_tableaus)+".pickle","wb") as f:
+            with open("data/tableau_"+"num_qubits"+str(num_qubits)+"_num_measurements"+str(num_measurements)+"degree"+str(degree)+"_num_tableaus"+str(num_tableaus)+".pickle","wb") as f:
                  pickle.dump(tableaus, f)
         else:
             tableaus[nr] = FixedWeightTableau.fixed_weight_tableau(num_qubits, num_meas, degree, XYZ = False)
-            with open("tableau_"+"num_qubits"+str(num_qubits)+"_num_measurements"+str(num_measurements)+"_num_tableaus"+str(num_tableaus)+".pickle","wb") as f:
+            with open("data/tableau_"+"num_qubits"+str(num_qubits)+"_num_measurements"+str(num_measurements)+"_num_tableaus"+str(num_tableaus)+".pickle","wb") as f:
                 pickle.dump(tableaus, f)
 
 createanddumptableaus(5,3)

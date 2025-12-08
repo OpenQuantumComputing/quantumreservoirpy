@@ -13,7 +13,7 @@ def createanddumpsising(num_qubits):
             _,
             isingparams[nr],
         ) = randomIsing(num_qubits, top, steps, dt)
-    with open("isingparams_"+"num_qubits"+str(num_qubits)+"_num_reservoirs"+str(num_reservoirs)+".pickle","wb") as f:
+    with open("data/isingparams_"+"num_qubits"+str(num_qubits)+"_num_reservoirs"+str(num_reservoirs)+".pickle","wb") as f:
         pickle.dump(isingparams, f)
 
 for num_qubits in range (3,11):

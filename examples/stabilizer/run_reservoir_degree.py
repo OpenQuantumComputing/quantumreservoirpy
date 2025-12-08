@@ -1,6 +1,7 @@
 import sys
 
-sys.path.append(r"C:\Users\rubenb\OneDrive - SINTEF\Desktop\cluster_exp\quantumreservoirpy")
+PACKAGE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
+sys.path.insert(0, PACKAGE_PATH)
 import numpy as np
 import reservoirpy as rpy
 import pickle
@@ -18,6 +19,7 @@ from qiskit_aer import AerSimulator
 import random 
 from itertools import islice
 from collections import defaultdict
+from reservoirpy.datasets import logistic_map, narma
 
 def fit_model(model, res_states, series, WARMUP, timeplex=1):
     warmup = int(len(series) * WARMUP)
@@ -43,7 +45,7 @@ def henon1d(n, a=1.4, b=0.3):
     return np.array(ts[2:])
 
 
-def main(num_qubits, num_meas, num_reservoirs, method, noise, lentrain, decode, casename, tableaunr, timeplex=10, degree=None, stab_method='random',stab_degree=1):
+def main(num_qubits, num_meas, num_reservoirs, method, noise, lents, decode, casename, tableaunr, timeplex=10, degree=None, stab_method='random',stab_degree=1):
 
     if not degree:
         degree = num_meas
@@ -52,13 +54,13 @@ def main(num_qubits, num_meas, num_reservoirs, method, noise, lentrain, decode, 
     num_neurons=num_reservoirs*(2**num_meas-1)
 
     if casename == "henon":
-        ts = henon1d(30)
+        ts = henon1d(lents)
     elif casename == "logistic":
-        ts=logistic_map(30, r=3.9, x0=0.5).flatten()
+        ts=logistic_map(lents, r=3.9, x0=0.5).flatten()
     #ts=narma(200).flatten()
     string_identifier="casename"+str(casename)+"_num_qubits"+str(num_qubits)+"_num_meas"+str(num_meas)
     string_identifier+="_degree"+str(degree)+"_num_reservoirs"+str(num_reservoirs)+"_timeplex"+str(timeplex)
-    string_identifier+="_method"+str(method)+"_noise"+str(noise)
+    string_identifier+="_method"+str(method)+"_noise"+str(noise)+"_expconcentration"
     if not decode:
         string_identifier+="_decodeFalse"
     string_identifier+="_tableaunr"+str(tableaunr)
@@ -87,7 +89,7 @@ def main(num_qubits, num_meas, num_reservoirs, method, noise, lentrain, decode, 
 
     with open("data/isingparams_"+"num_qubits"+str(num_qubits)+"_num_reservoirs20"+".pickle","rb") as f:
         isingparams = pickle.load(f)
-    isinparams = dict(islice(isingparams.items(), num_reservoirs))
+    isingparams = dict(islice(isingparams.items(), num_reservoirs))
     with open("data/tableau_"+"num_qubits"+str(num_qubits)+"_num_measurements"+str(num_meas)+"degree"+str(degree)+"_num_tableaus100.pickle","rb") as f:
         tableau = pickle.load(f)
     sampled_keys = random.sample(list(tableau.keys()), 1)
@@ -108,16 +110,16 @@ def main(num_qubits, num_meas, num_reservoirs, method, noise, lentrain, decode, 
                 res = res= Stabilizer(num_qubits, num_meas, tableau=tableau, backend = AerSimulator(noise_model=noise_model),\
                             degree=1,stab_method=stab_method,stab_deg=stab_degree, num_reservoirs=num_reservoirs,decode=True)
     tscv = TimeSeriesSplit(n_splits=2)
-    print(tscv)
+    print(ts)
     for i, (train_index, test_index) in enumerate(tscv.split(ts)):
         print(i)
         X_train=ts[train_index]
         X_test=ts[test_index]
         num_pred = len(test_index)
 
-        with open("X_train"+str(i)+"_"+string_identifier+".pickle","wb") as f:
+        with open("results/X_train"+str(i)+"_"+string_identifier+".pickle","wb") as f:
             pickle.dump(X_train, f)
-        with open("X_test"+str(i)+"_"+string_identifier+".pickle","wb") as f:
+        with open("results/X_test"+str(i)+"_"+string_identifier+".pickle","wb") as f:
             pickle.dump(X_test, f)
         
         if method =='classical':
@@ -130,11 +132,11 @@ def main(num_qubits, num_meas, num_reservoirs, method, noise, lentrain, decode, 
         score = linreg.score(X, y)
         print("score[",method,"]=", score)
         
-        with open("score"+str(i)+"_"+string_identifier+".pickle","wb") as f:
+        with open("results/score"+str(i)+"_"+string_identifier+".pickle","wb") as f:
             pickle.dump(score, f)
 
     #        if not method == "classical":
-        with open("state"+str(i)+"_"+string_identifier+".pickle","wb") as f:
+        with open("results/state"+str(i)+"_"+string_identifier+".pickle","wb") as f:
             pickle.dump(states, f)
 
         firsttime=True
@@ -156,7 +158,7 @@ def main(num_qubits, num_meas, num_reservoirs, method, noise, lentrain, decode, 
             print(prediction)
             firsttime=False
 
-        with open("prediction"+str(i)+"_"+string_identifier+".pickle","wb") as f:
+        with open("results/prediction"+str(i)+"_"+string_identifier+".pickle","wb") as f:
             pickle.dump(prediction, f)
 
 
@@ -171,10 +173,11 @@ if __name__ == "__main__":
     decode = bool(int(sys.argv[7]))
     casename = str(sys.argv[8])
     tableaunr = int(sys.argv[9])
-    stab_method= str(sys.argv[10])
-    stab_degree= int(sys.argv[11])
-    shots= int(sys.argv[12])
+    timeplex= int(sys.argv[10])
+    degree= int(sys.argv[11])
+    stab_method= str(sys.argv[12])
+    stab_degree= int(sys.argv[13])
 
-    print("Running:", num_qubits, num_meas, num_reservoirs, method, noise, lentrain, decode, casename, tableaunr,stab_method, stab_degree,shots)
-    main(num_qubits, num_meas, num_reservoirs, method, noise, lentrain, decode, casename, tableaunr,stab_method, stab_degree,shots)
+    print("Running:", num_qubits, num_meas, num_reservoirs, method, noise, lentrain, decode, casename, tableaunr,timeplex, degree, stab_method, stab_degree)
+    main(num_qubits, num_meas, num_reservoirs, method, noise, lentrain, decode, casename, tableaunr,timeplex,degree,stab_method, stab_degree)
 
