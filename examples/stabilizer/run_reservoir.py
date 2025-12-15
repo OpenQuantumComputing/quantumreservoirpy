@@ -31,11 +31,12 @@ from my_util import compute_expectations_for_all_timesteps, execute_reservoir, g
 
 
 def main(num_qubits, num_meas, num_reservoirs, method, noise, lents, decode, casename,
-        tableaunr,stab_method, stab_degree, timeplex=1, degree=None,shots=10000):
+        stab_method, stab_degree, shots=10000, degree=None):
     if not degree:
         degree = num_meas
     #degree = min(degree, 3)
-    k=timeplex
+    k=5
+    time=50
     num_neurons=num_reservoirs*num_meas
 
     if casename == "henon":
@@ -45,13 +46,12 @@ def main(num_qubits, num_meas, num_reservoirs, method, noise, lents, decode, cas
     #ts=narma(200).flatten()
 
     string_identifier="casename"+str(casename)+"_num_qubits"+str(num_qubits)+"_num_meas"+str(num_meas)
-    string_identifier+="_degree"+str(degree)+"_num_reservoirs"+str(num_reservoirs)+"_timeplex10"
-    string_identifier+="_method"+str(method)+"_noise"+str(noise)+"_tableaunr"+str(tableaunr)+"_shots"+str(shots)
+    string_identifier+="_num_reservoirs"+str(num_reservoirs)+"_steps"+str(lentrain)
+    string_identifier+="_method"+str(method)+"_noise"+str(noise)+"_shots"+str(shots)
     if not decode:
         string_identifier+="_decodeFalse"
-    string_identifier+="_tableaunr"+str(tableaunr)
 
-    print(string_identifier, " number of neurons/observables=",num_neurons )
+    print(string_identifier, " number of neurons/observables=",num_neurons)
 
 
 
@@ -70,7 +70,7 @@ def main(num_qubits, num_meas, num_reservoirs, method, noise, lents, decode, cas
         error = depolarizing_error(0.1, 2)
         noise_model.add_all_qubit_quantum_error(error, ['cx'])
 
-    WARMUP=0.3
+    WARMUP=0.2
     warmup=int(WARMUP*len(ts))
     if method == "classical":
         res = Reservoir(num_neurons, lr=0.7, sr=0.99)
@@ -82,7 +82,6 @@ def main(num_qubits, num_meas, num_reservoirs, method, noise, lents, decode, cas
             tableau = pickle.load(f)
         sampled_keys = random.sample(list(tableau.keys()), 1)
         sampled_list = [tableau[key] for key in sampled_keys]
-        print(isingparams.values())
         # merge and wrap as list of dict
         tableau = [{
             'stabilizer': [s for d in sampled_list for s in d['stabilizer']],
@@ -174,12 +173,14 @@ def main(num_qubits, num_meas, num_reservoirs, method, noise, lents, decode, cas
                     firsttime=False
         else:
             for i in range(len(X_test)):
-                print(j,"/",num_pred)
-                pred_step = predict_one_step_ahead(model, timeseries_aux, num_qubits, num_meas, res, backend= AerSimulator(noise_model=noise_model),method=method,ising_params=isingparams,shots=shots)
+                print(i,"/",num_pred)
+                pred_step = predict_one_step_ahead(model, timeseries_aux[-time:], num_qubits, num_meas, res, backend= AerSimulator(noise_model=noise_model),method=method,ising_params=isingparams,shots=shots)
                 timeseries_aux = np.vstack([timeseries_aux, np.array([[pred_step]])])
 
         with open("results/prediction"+str(ep)+"_"+string_identifier+".pickle","wb") as f:
             pickle.dump(timeseries_aux, f)
+ 
+ 
  
 
 
@@ -192,11 +193,22 @@ if __name__ == "__main__":
     lentrain = int(sys.argv[6])
     decode = bool(int(sys.argv[7]))
     casename = str(sys.argv[8])
-    tableaunr = int(sys.argv[9])
-    stab_method= str(sys.argv[10])
-    stab_degree= int(sys.argv[11])
-    shots= int(sys.argv[12])
+    stab_method= str(sys.argv[9])
+    stab_degree= int(sys.argv[10])
+    shots=int(sys.argv[11])
 
-    print("Running:", num_qubits, num_meas, num_reservoirs, method, noise, lentrain, decode, casename, tableaunr,stab_method,stab_degree,shots=shots)
-    main(num_qubits, num_meas, num_reservoirs, method, noise, lentrain, decode, casename, tableaunr,stab_method,stab_degree,shots=shots)
+    
+    print("num_qubits =", num_qubits)
+    print("num_meas =", num_meas)
+    print("num_reservoirs =", num_reservoirs)
+    print("method =", method)
+    print("noise =", noise)
+    print("lentrain =", lentrain)
+    print("decode =", decode)
+    print("casename =", casename)
+    print("stab_method =", stab_method)
+    print("stab_degree =", stab_degree)
+    print("shots =", shots)
+
+    main(num_qubits, num_meas, num_reservoirs, method, noise, lentrain, decode, casename, stab_method,stab_degree,shots)
 

@@ -166,7 +166,7 @@ def logistic(n):
 # Prediction function
 def predict_one_step_ahead(model, timeseries_aux, num_qubits, num_measurement, reservoirs,backend, method, ising_params=None, shots=10000):
     ts_list = timeseries_aux.flatten().tolist()
-    k=1
+    k=5
     obs=[]
     num_tot_obs=len(generate_ZI_pauli_strings(num_measurement))
     for i,reservoir_circuit in enumerate(reservoirs):
